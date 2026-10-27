@@ -1,0 +1,244 @@
+    /* ==========================================================================
+       2. INTERFACE SAAS ÉLÉGANTE & MODERNE (MASQUÉE À L'IMPRESSION)
+       ========================================================================== */
+    .saas-navbar {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: #ffffff;
+      padding: 10px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.35);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .saas-title-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35);
+      flex-shrink: 0;
+    }
+
+    .brand-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      background: rgba(59, 130, 246, 0.18);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      color: #93c5fd;
+      padding: 2px 7px;
+      border-radius: 5px;
+      line-height: 1.2;
+    }
+
+    .saas-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      margin: 0;
+      color: #f8fafc;
+      white-space: nowrap;
+    }
+
+    .db-pill {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      color: #cbd5e1;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+
+    .db-pill::before {
+      content: "";
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: #94a3b8;
+      transition: all 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .db-pill.has-data {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.38);
+      color: #6ee7b7;
+    }
+
+    .db-pill.has-data::before {
+      background-color: #10b981;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+    }
+
+    .saas-toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn-group,
+    .btn-group-export {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .btn-saas {
+      border: 1px solid transparent;
+      padding: 7px 13px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 12.5px;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #ffffff;
+      user-select: none;
+      line-height: 1.2;
+      box-sizing: border-box;
+    }
+
+    .btn-saas:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-saas:active {
+      transform: translateY(0);
+      filter: brightness(0.95);
+    }
+
+    .btn-saas:focus-visible {
+      outline: 2px solid #38bdf8;
+      outline-offset: 2px;
+    }
+
+    .btn-icon {
+      flex-shrink: 0;
+      transition: transform 0.15s ease;
+    }
+
+    .btn-saas:hover .btn-icon {
+      transform: scale(1.08);
+    }
+
+    /* 1. Importer Base Excel */
+    .btn-import {
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+      border-color: rgba(59, 130, 246, 0.4);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
+    .btn-import:hover {
+      background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.38);
+    }
+
+    /* 2. Édition lignes tableau */
+    .btn-add {
+      background: rgba(30, 41, 59, 0.85);
+      border-color: rgba(71, 85, 105, 0.7);
+      color: #e2e8f0;
+    }
+    .btn-add:hover {
+      background: #334155;
+      border-color: #64748b;
+      color: #ffffff;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+    }
+
+    .btn-delete {
+      background: rgba(220, 38, 38, 0.16);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+    .btn-delete:hover {
+      background: #dc2626;
+      border-color: #dc2626;
+      color: #ffffff;
+      box-shadow: 0 3px 12px rgba(220, 38, 38, 0.35);
+    }
+
+    /* 3. Réinitialiser */
+    .btn-clear {
+      background: transparent;
+      border-color: rgba(100, 116, 139, 0.45);
+      color: #cbd5e1;
+    }
+    .btn-clear:hover {
+      background: rgba(51, 65, 85, 0.5);
+      border-color: #94a3b8;
+      color: #ffffff;
+    }
+
+    /* 4. Imprimer */
+    .btn-print {
+      background: rgba(15, 118, 110, 0.22);
+      border-color: rgba(20, 184, 166, 0.45);
+      color: #5eead4;
+    }
+    .btn-print:hover {
+      background: #0f766e;
+      border-color: #0d9488;
+      color: #ffffff;
+      box-shadow: 0 3px 12px rgba(13, 148, 136, 0.32);
+    }
+
+    /* 5. Exporter en PDF */
+    .btn-pdf {
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      border-color: rgba(16, 185, 129, 0.5);
+      color: #ffffff;
+      font-weight: 600;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+    }
+    .btn-pdf:hover {
+      background: linear-gradient(135deg, #047857 0%, #059669 100%);
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.45);
+    }
+

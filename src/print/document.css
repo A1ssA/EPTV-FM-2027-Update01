@@ -1,0 +1,225 @@
+    /* ==========================================================================
+       4. STRUCTURE & BORDURES EXACTES DU MODÈLE EXCEL
+       ========================================================================== */
+    table.banner-direction-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background-color: #EBEBEB;
+      border: 1pt solid #000000;
+      height: 7.5mm;
+      margin-bottom: 3.5mm;
+    }
+
+    table.banner-direction-table td {
+      height: 7.5mm;
+      padding: 0 4px;
+      vertical-align: middle;
+      font-family: "Calibri", Arial, sans-serif;
+      font-weight: 700;
+      font-size: 11pt;
+    }
+
+    td.banner-col-dst {
+      width: 13%;
+      text-align: center;
+      border-right: 1pt solid #000000;
+      letter-spacing: 0.5px;
+    }
+
+    td.banner-col-sd {
+      width: 87%;
+      text-align: center;
+      padding: 0 4px;
+    }
+
+    .banner-select {
+      width: 100%;
+      height: 100%;
+      font-family: "Calibri", Arial, sans-serif;
+      font-weight: 700;
+      font-size: 10pt;
+      text-align: center;
+      text-align-last: center;
+      background: transparent;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      color: #000000;
+      letter-spacing: 0.2px;
+    }
+
+    /* Grille de 11 colonnes commune à l'entête et au tableau */
+    col.c-nom        { width: 22.0%; }
+    col.c-fonction   { width: 17.5%; }
+    col.c-categorie  { width: 7.8%;  }
+    col.c-njours     { width: 5.2%;  }
+    col.c-nrepas     { width: 5.2%;  }
+    col.c-pctjour    { width: 8.0%;  }
+    col.c-repas      { width: 4.8%;  }
+    col.c-pp         { width: 4.5%;  }
+    col.c-net        { width: 6.7%;  }
+    col.c-mat        { width: 5.8%;  }
+    col.c-emargement { width: 12.5%; }
+
+    table.cartouche-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-bottom: 0;
+    }
+
+    table.cartouche-table td {
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 9.5pt;
+      font-weight: 700;
+      height: 5.4mm;
+      padding: 0 4px;
+      vertical-align: middle;
+    }
+
+    .b-cell   { border: 0.75pt solid #000000; }
+    .bg-head  { background-color: #EBEBEB; }
+    .t-left   { text-align: left; }
+    .t-center { text-align: center; }
+    .t-right  { text-align: right; }
+
+    /* Tableau Principal */
+    table.mission-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      border: 1pt solid #000000;
+    }
+
+    table.mission-table thead th {
+      background-color: #EBEBEB;
+      border: 0.75pt solid #000000;
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 8.2pt;
+      font-weight: 700;
+      text-align: center;
+      vertical-align: middle;
+      height: 6.4mm;
+      padding: 0 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      letter-spacing: -0.1px;
+    }
+
+    /* Bordures extérieures renforcées (nom&prenom à gauche, émargement à droite) */
+    table.mission-table thead th:first-child,
+    table.mission-table tbody td:first-child {
+      border-left: 1pt solid #000000;
+    }
+
+    table.mission-table thead th:last-child,
+    table.mission-table tbody td:last-child {
+      border-right: 1pt solid #000000;
+    }
+
+    table.mission-table tbody tr {
+      height: 7.6mm;
+      background-color: #ffffff;
+    }
+
+    table.mission-table tbody td {
+      border: 0.75pt solid #000000;
+      background-color: #ffffff;
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 8.8pt;
+      vertical-align: middle;
+      padding: 0 3px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    td.cell-poste {
+      font-weight: 400;
+      text-align: center;
+      font-size: 8.4pt;
+    }
+
+    td.cell-num {
+      font-weight: 400;
+      text-align: center;
+      font-size: 8.8pt;
+    }
+
+    /* Colonne NET en BLANC */
+    td.cell-net {
+      background-color: #ffffff !important;
+      font-weight: 700;
+      text-align: center;
+      font-size: 8.8pt;
+    }
+
+    td.cell-mat {
+      font-weight: 400;
+      text-align: center;
+      font-size: 8.5pt;
+    }
+
+    /* Ligne TOTAL & Somme Globale agrandie à 300% */
+    tr.total-row td {
+      height: 11mm;
+      font-family: "Calibri", Arial, sans-serif;
+      padding: 0;
+      vertical-align: middle;
+    }
+
+    td.total-empty {
+      border: none;
+      background: transparent;
+    }
+
+    td.total-title {
+      background-color: #DCDCDC;
+      border: 1pt solid #000000;
+      text-align: center;
+      font-size: 13pt;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+    }
+
+    td.total-amount {
+      background-color: #EBEBEB;
+      border: 1.25pt solid #000000;
+      text-align: center;
+      vertical-align: middle;
+      width: 100%;
+      font-size: 17pt; /* Case agrandie 300% avec police imposante et très lisible */
+      font-weight: 900;
+      letter-spacing: 0.6px;
+      white-space: nowrap;
+      padding: 0 6px;
+    }
+
+    /* Pied de page */
+    .footer-section {
+      margin-top: 4mm;
+      font-family: "Calibri", Arial, sans-serif;
+    }
+
+    .arrete-label {
+      font-size: 12pt;
+      font-weight: 700;
+      margin-bottom: 1.5mm;
+    }
+
+    .arrete-words {
+      font-size: 11.5pt;
+      font-weight: 700;
+      font-style: italic;
+      margin-bottom: 4mm;
+      min-height: 5mm;
+    }
+
+    .signature-ordonnateur {
+      text-align: right;
+      padding-right: 22mm;
+      font-size: 11.5pt;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+

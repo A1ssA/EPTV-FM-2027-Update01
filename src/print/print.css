@@ -1,0 +1,88 @@
+    /* ==========================================================================
+       1. CONFIGURATION STRICTE PAGE A4 & IMPRESSION
+       ========================================================================== */
+    @page {
+      size: A4 portrait;
+      margin: 8mm 8mm 8mm 8mm;
+    }
+
+
+
+    /* Règles strictes d'impression : 0 flèche, 0 placeholder, fidélité 100% Excel */
+    @media print {
+      body { background: #ffffff; }
+      .saas-navbar { display: none !important; }
+      .a4-workspace { padding: 0; }
+      .a4-sheet {
+        width: 100%;
+        min-height: auto;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+      }
+      .excel-input::placeholder {
+        color: transparent !important;
+      }
+      .excel-input, .excel-select, .banner-select, .heure-select-wrapper select, .nom-combobox input.inp-nom {
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding-right: 2px !important;
+        border: none !important;
+      }
+      .nom-combobox .combo-arrow,
+      .nom-dropdown-list,
+      .date-display-text .cal-arrow {
+        display: none !important;
+      }
+      input::-webkit-calendar-picker-indicator {
+        display: none !important;
+        opacity: 0 !important;
+      }
+
+      /* Intégrité stricte des bordures sur tout le tableau et toutes les colonnes */
+      table.mission-table,
+      table.cartouche-table,
+      table.banner-direction-table {
+        border-collapse: collapse !important;
+        border: 1pt solid #000000 !important;
+      }
+      table.mission-table thead th,
+      table.mission-table tbody td {
+        border: 0.75pt solid #000000 !important;
+      }
+      table.mission-table thead th:first-child,
+      table.mission-table tbody td:first-child {
+        border-left: 1.2pt solid #000000 !important;
+      }
+      table.mission-table thead th:last-child,
+      table.mission-table tbody td:last-child {
+        border-right: 1.2pt solid #000000 !important;
+      }
+      .cell-emargement {
+        border-right: 1.2pt solid #000000 !important;
+      }
+
+      /* Case TOTAL agrandie 300% à l'impression */
+      tr.total-row td {
+        height: 11mm !important;
+      }
+      td.total-title {
+        font-size: 13pt !important;
+        font-weight: 800 !important;
+        border: 1pt solid #000000 !important;
+      }
+      td.total-amount {
+        font-size: 17pt !important;
+        font-weight: 900 !important;
+        border: 1.25pt solid #000000 !important;
+      }
+    }
+
+    @media print {
+      tr.active-row td {
+        background-color: #ffffff !important;
+      }
+    }

@@ -1,0 +1,23 @@
+{
+  "name": "eptv-frais-mission",
+  "private": true,
+  "version": "1.0.0",
+  "description": "EPTV — État des Frais de Mission (version modulaire, document A4 identique à l'original)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "test": "vitest run",
+    "test:visual": "npm run build && node tests/visual/compare.mjs"
+  },
+  "devDependencies": {
+    "pixelmatch": "^6.0.0",
+    "playwright-core": "1.56.0",
+    "pngjs": "^7.0.0",
+    "vite": "^6.0.0",
+    "vite-plugin-singlefile": "^2.3.4",
+    "vitest": "^3.0.0",
+    "xlsx": "^0.18.5"
+  }
+}

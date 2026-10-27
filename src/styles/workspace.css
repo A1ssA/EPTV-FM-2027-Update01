@@ -1,0 +1,19 @@
+    /* ==========================================================================
+       3. CONTENEUR FEUILLE A4
+       ========================================================================== */
+    .a4-workspace {
+      padding: 28px 16px 48px 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .a4-sheet {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      padding: 10mm 8mm 8mm 8mm;
+      box-shadow: 0 12px 36px rgba(15, 23, 42, 0.15), 0 2px 6px rgba(15, 23, 42, 0.08);
+      border-radius: 2px;
+      position: relative;
+    }
+

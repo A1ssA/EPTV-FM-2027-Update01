@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>EPTV — État des Frais de Mission</title>
+  <!-- Librairie SheetJS pour l'import de la base du personnel Excel (sdmpvm) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+  <!-- Liste des destinations (Wilayas) -->
+  <datalist id="dlDestinations">
+    <option value="ADRAR"><option value="CHLEF"><option value="LAGHOUAT"><option value="OUM EL BOUAGHI">
+    <option value="BATNA"><option value="BEJAIA"><option value="BISKRA"><option value="BECHAR">
+    <option value="BLIDA"><option value="BOUIRA"><option value="TAMANRASSET"><option value="TEBESSA">
+    <option value="TLEMCEN"><option value="TIARET"><option value="TIZI-OUZOU"><option value="ALGER">
+    <option value="DJELFA"><option value="JIJEL"><option value="SETIF"><option value="SAIDA">
+    <option value="SKIKDA"><option value="SIDI BEL ABBES"><option value="ANNABA"><option value="GUELMA">
+    <option value="CONSTANTINE"><option value="MEDEA"><option value="MOSTAGANEM"><option value="M'SILA">
+    <option value="MASCARA"><option value="OUARGLA"><option value="ORAN"><option value="EL BAYADH">
+    <option value="ILLIZI"><option value="BORDJ BOU ARRERIDJ"><option value="BOUMERDES"><option value="EL TARF">
+    <option value="TINDOUF"><option value="TISSEMSILT"><option value="EL OUED"><option value="KHENCHELA">
+    <option value="SOUK AHRAS"><option value="TIPAZA"><option value="MILA"><option value="AIN DEFLA">
+    <option value="NAAMA"><option value="AIN TEMOUCHENT"><option value="GHARDAIA"><option value="RELIZANE">
+  </datalist>
+
+  <!-- 1. BARRE DE NAVIGATION SAAS ÉPURÉE -->
+  <header class="saas-navbar">
+    <div class="saas-title-group">
+      <div class="brand-container">
+        <div class="brand-logo" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-badge">EPTV</span>
+          <h1 class="saas-title">État des Frais de Mission</h1>
+        </div>
+      </div>
+      <span class="db-pill" id="badgeDbCount">Base Personnel : 0 agent</span>
+    </div>
+    <div class="saas-toolbar-actions">
+      <label class="btn-saas btn-import" title="Importer la base de données du personnel depuis votre fichier Excel">
+        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        <span>Importer Base Excel</span>
+        <input type="file" id="fileExcelInput" accept=".xlsm,.xlsx,.xls,.csv" style="display:none;">
+      </label>
+
+      <div class="btn-group">
+        <button class="btn-saas btn-add" id="btnInsererLigne" title="Ajouter une ligne au tableau">
+          <svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Insérer une ligne</span>
+        </button>
+        <button class="btn-saas btn-delete" id="btnSupprimerLigne" title="Supprimer la ligne sélectionnée">
+          <svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Supprimer la ligne</span>
+        </button>
+      </div>
+
+      <button class="btn-saas btn-clear" id="btnReinitialiser" title="Réinitialiser tous les champs de la feuille">
+        <svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+        </svg>
+        <span>Réinitialiser</span>
+      </button>
+
+      <div class="btn-group-export">
+        <button class="btn-saas btn-print" id="btnImprimer" title="Imprimer le document">
+          <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+          </svg>
+          <span>Imprimer</span>
+        </button>
+        <button class="btn-saas btn-pdf" id="btnExportPdf" title="Exporter au format PDF">
+          <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>Exporter en PDF</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. ESPACE DE TRAVAIL & FEUILLE A4 IMPRIMABLE -->
+  <main class="a4-workspace">
+    <div class="a4-sheet">
+
+      <!-- BANDEAU SOUS-DIRECTION EN 2 COLONNES -->
+      <table class="banner-direction-table">
+        <tbody>
+          <tr>
+            <td class="banner-col-dst">DST</td>
+            <td class="banner-col-sd">
+              <select id="selSousDirection" class="banner-select">
+                <option value="SOUS DIRECTION DES MOYENS DE PRODUCTION VIDEO MOBILE" selected>SOUS DIRECTION DES MOYENS DE PRODUCTION VIDEO MOBILE</option>
+                <option value="SOUS DIRECTION DES MOYENS DE PRODUCTION VIDEO FIXE">SOUS DIRECTION DES MOYENS DE PRODUCTION VIDEO FIXE</option>
+                <option value="SOUS DIRECTION DE DIFFUSION">SOUS DIRECTION DE DIFFUSION</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- CARTOUCHE D'EN-TÊTE DE MISSION -->
+      <table class="cartouche-table">
+        <colgroup>
+          <col class="c-nom">
+          <col class="c-fonction">
+          <col class="c-categorie">
+          <col class="c-njours">
+          <col class="c-nrepas">
+          <col class="c-pctjour">
+          <col class="c-repas">
+          <col class="c-pp">
+          <col class="c-net">
+          <col class="c-mat">
+          <col class="c-emargement">
+        </colgroup>
+        <tbody>
+          <!-- Ligne 1 : DESTINATION (vide par défaut) & FRAIS DE MISSION -->
+          <tr>
+            <td class="b-cell bg-head t-left">DESTINATION:</td>
+            <td class="b-cell t-center" colspan="6">
+              <input type="text" id="inpDestination" class="excel-input t-center" list="dlDestinations" value="" placeholder="Saisir ou choisir la destination..." />
+            </td>
+            <td></td>
+            <td class="b-cell bg-head t-center" colspan="2" style="font-size:8pt;">FRAIS DE MISSION:</td>
+            <td class="b-cell t-center">
+              <select id="cellAI1_Zone" class="excel-select t-center">
+                <option value="NORD" selected>NORD</option>
+                <option value="SUD">SUD</option>
+              </select>
+            </td>
+          </tr>
+
+          <!-- Ligne 2 : EVENEMENT (vide par défaut) & TAUX (100% / 40%) -->
+          <tr>
+            <td class="b-cell bg-head t-left">EVENEMENT:</td>
+            <td class="b-cell t-center" colspan="6">
+              <input type="text" id="inpEvenement" class="excel-input t-center" value="" placeholder="Saisir l'événement..." />
+            </td>
+            <td></td>
+            <td class="b-cell t-center" colspan="3" rowspan="2" style="font-size:13pt; font-weight:700;">
+              <select id="cellAK1_Taux" class="excel-select t-center" style="font-size:13pt; font-weight:700;">
+                <option value="1" selected>100%</option>
+                <option value="0.4">40%</option>
+                <option value="0.25">25%</option>
+              </select>
+            </td>
+          </tr>
+
+          <!-- Ligne 3 : DATE DU (Calendrier) AU (Calendrier >= Départ) -->
+          <tr>
+            <td class="b-cell bg-head t-left">DATE:</td>
+            <td class="b-cell t-center">DU</td>
+            <td class="b-cell t-center" colspan="2">
+              <div class="date-picker-cell">
+                <span class="date-display-text" id="labelDateDebut">
+                  <span class="val-date"></span>
+                  <span class="cal-arrow">▾</span>
+                </span>
+                <input type="date" id="dateDebutPicker" class="date-native-input" />
+              </div>
+            </td>
+            <td class="b-cell t-center">AU</td>
+            <td class="b-cell t-center" colspan="2">
+              <div class="date-picker-cell">
+                <span class="date-display-text" id="labelDateFin">
+                  <span class="val-date"></span>
+                  <span class="cal-arrow">▾</span>
+                </span>
+                <input type="date" id="dateFinPicker" class="date-native-input" />
+              </div>
+            </td>
+            <td></td>
+          </tr>
+
+          <!-- Ligne 4 : HEURE DE RETOUR (3 horaires prédéfinis : 12:00, 15:00, 20:00) -->
+          <tr style="height: 5.2mm;">
+            <td colspan="5"></td>
+            <td class="b-cell t-center" colspan="2" style="padding:0;">
+              <div class="heure-select-wrapper">
+                <select id="cellN4_HeureFin">
+                  <option value="12:00" selected>12:00</option>
+                  <option value="15:00">15:00</option>
+                  <option value="20:00">20:00</option>
+                </select>
+              </div>
+            </td>
+            <td colspan="4"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- TABLEAU PRINCIPAL DES MISSIONNAIRES (100% Vierge à l'origine) -->
+      <table class="mission-table" id="tableMission">
+        <colgroup>
+          <col class="c-nom">
+          <col class="c-fonction">
+          <col class="c-categorie">
+          <col class="c-njours">
+          <col class="c-nrepas">
+          <col class="c-pctjour">
+          <col class="c-repas">
+          <col class="c-pp">
+          <col class="c-net">
+          <col class="c-mat">
+          <col class="c-emargement">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>NOM &amp; PRENOM</th>
+            <th>FONCTION</th>
+            <th>CATEGORIE</th>
+            <th>N JOURS</th>
+            <th>N REPAS</th>
+            <th>% DU JOUR</th>
+            <th>REPAS</th>
+            <th>PP</th>
+            <th>NET</th>
+            <th>MAT</th>
+            <th>EMARGEMENT</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyMission"></tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="5" class="total-empty"></td>
+            <td colspan="2" class="total-title">TOTAL</td>
+            <!-- Somme globale agrandie (300%) sur colonnes PP + NET + MAT + EMARGEMENT -->
+            <td colspan="4" class="total-amount" id="cellP41_Total">0 DA</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- PIED DE PAGE -->
+      <div class="footer-section">
+        <div class="arrete-label">Arrêter le présent état à la somme de :</div>
+        <div class="arrete-words" id="cellA44_Lettres">Zéro Dinars</div>
+        <div class="signature-ordonnateur">L'Ordonnateur</div>
+      </div>
+
+    </div>
+  </main>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

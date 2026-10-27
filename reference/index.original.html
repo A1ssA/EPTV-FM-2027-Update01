@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>EPTV — État des Frais de Mission</title>
+  <!-- Librairie SheetJS pour l'import de la base du personnel Excel (sdmpvm) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <style>
+    /* ==========================================================================
+       1. CONFIGURATION STRICTE PAGE A4 & IMPRESSION
+       ========================================================================== */
+    @page {
+      size: A4 portrait;
+      margin: 8mm 8mm 8mm 8mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #e2e8f0;
+      font-family: "Calibri", "Segoe UI", Arial, sans-serif;
+      color: #000000;
+    }
+
+    /* ==========================================================================
+       2. INTERFACE SAAS ÉLÉGANTE (MASQUÉE À L'IMPRESSION)
+       ========================================================================== */
+    .saas-navbar {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 14px 28px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.22);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .saas-title-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .saas-title {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      margin: 0;
+      color: #f8fafc;
+    }
+
+    .db-pill {
+      background: rgba(56, 189, 248, 0.14);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #bae6fd;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .saas-toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn-saas {
+      border: 1px solid transparent;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 12.5px;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.18s ease;
+      color: #ffffff;
+      background: #1e293b;
+    }
+
+    .btn-saas:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    }
+
+    .btn-import  { background: #2563eb; }
+    .btn-import:hover { background: #1d4ed8; }
+
+    .btn-add     { background: #334155; border-color: #475569; }
+    .btn-add:hover { background: #475569; }
+
+    .btn-delete  { background: #dc2626; }
+    .btn-delete:hover { background: #b91c1c; }
+
+    .btn-clear   { background: transparent; border-color: #64748b; color: #e2e8f0; }
+    .btn-clear:hover { background: #334155; color: #ffffff; }
+
+    .btn-print   { background: #059669; font-weight: 600; padding: 8px 18px; }
+    .btn-print:hover { background: #047857; }
+
+    /* ==========================================================================
+       3. CONTENEUR FEUILLE A4
+       ========================================================================== */
+    .a4-workspace {
+      padding: 28px 16px 48px 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .a4-sheet {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      padding: 10mm 8mm 8mm 8mm;
+      box-shadow: 0 12px 36px rgba(15, 23, 42, 0.15), 0 2px 6px rgba(15, 23, 42, 0.08);
+      border-radius: 2px;
+      position: relative;
+    }
+
+    /* Champs de saisie et menus déroulants */
+    .excel-input, .excel-select {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: inherit;
+      font-weight: inherit;
+      color: #000000;
+      text-align: inherit;
+      padding: 0;
+      margin: 0;
+      outline: none;
+    }
+
+    .excel-input::placeholder {
+      color: #94a3b8;
+      font-weight: 400;
+      font-style: italic;
+    }
+
+    .excel-input:focus, .excel-select:focus {
+      background-color: #f0f9ff;
+      box-shadow: inset 0 0 0 1px #0284c7;
+    }
+
+    /* ==========================================================================
+       COMBOBOX SUR MESURE POUR NOM & PRENOM (FILTRAGE LETTRE PAR LETTRE + FLÈCHE)
+       ========================================================================== */
+    td.cell-nom {
+      padding: 0 !important;
+      font-weight: 700;
+      text-align: left;
+      overflow: visible !important; /* Permet d'afficher la liste filtrée par-dessus les lignes */
+      position: relative;
+    }
+
+    .nom-combobox {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    .nom-combobox input.inp-nom {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 8.4pt;
+      font-weight: 700;
+      color: #000000;
+      padding-left: 4px;
+      padding-right: 16px;
+      outline: none;
+      text-transform: uppercase;
+    }
+
+    .nom-combobox .combo-arrow {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8.5pt;
+      color: #64748b;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .nom-combobox .combo-arrow:hover {
+      color: #0f172a;
+      background-color: #e2e8f0;
+    }
+
+    /* Menu déroulant flottant filtré lettre par lettre */
+    .nom-dropdown-list {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: -1px;
+      width: 280px;
+      max-height: 210px;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid #0284c7;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.22);
+      z-index: 9999;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .nom-dropdown-list.open {
+      display: block;
+    }
+
+    .nom-dropdown-item {
+      padding: 5px 8px;
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 9pt;
+      font-weight: 600;
+      color: #0f172a;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nom-dropdown-item:hover,
+    .nom-dropdown-item.highlighted {
+      background-color: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .nom-dropdown-item .match-chars {
+      color: #2563eb;
+      text-decoration: underline;
+      font-weight: 800;
+    }
+
+    .nom-dropdown-item .meta-agent {
+      font-size: 7.5pt;
+      font-weight: 400;
+      color: #64748b;
+      white-space: nowrap;
+    }
+
+    /* Sélecteur de Date avec Calendrier natif superposé + Affichage JJ/MM/AAAA */
+    .date-picker-cell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .date-display-text {
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #000000;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .date-display-text .cal-arrow {
+      font-size: 8pt;
+      color: #64748b;
+    }
+
+    .date-native-input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      border: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Sélecteur d'heure (12:00 / 15:00 / 20:00) */
+    .heure-select-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .heure-select-wrapper select {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 9.5pt;
+      font-weight: 400;
+      text-align: center;
+      text-align-last: center;
+      color: #000000;
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* Règles strictes d'impression : 0 flèche, 0 placeholder, fidélité 100% Excel */
+    @media print {
+      body { background: #ffffff; }
+      .saas-navbar { display: none !important; }
+      .a4-workspace { padding: 0; }
+      .a4-sheet {
+        width: 100%;
+        min-height: auto;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+      }
+      .excel-input::placeholder {
+        color: transparent !important;
+      }
+      .excel-input, .excel-select, .heure-select-wrapper select, .nom-combobox input.inp-nom {
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding-right: 2px !important;
+      }
+      .nom-combobox .combo-arrow,
+      .nom-dropdown-list,
+      .date-display-text .cal-arrow {
+        display: none !important;
+      }
+      input::-webkit-calendar-picker-indicator {
+        display: none !important;
+        opacity: 0 !important;
+      }
+    }
+
+    /* ==========================================================================
+       4. STRUCTURE & BORDURES EXACTES DU MODÈLE EXCEL
+       ========================================================================== */
+    .banner-direction {
+      background-color: #EBEBEB;
+      border: 1pt solid #000000;
+      text-align: center;
+      font-family: "Calibri", Arial, sans-serif;
+      font-weight: 700;
+      font-size: 11pt;
+      height: 7.5mm;
+      line-height: 7.5mm;
+      letter-spacing: 0.2px;
+      margin-bottom: 3.5mm;
+    }
+
+    /* Grille de 11 colonnes commune à l'entête et au tableau */
+    col.c-nom        { width: 22.8%; }
+    col.c-fonction   { width: 22.2%; }
+    col.c-categorie  { width: 7.2%;  }
+    col.c-njours     { width: 5.7%;  }
+    col.c-nrepas     { width: 5.7%;  }
+    col.c-pctjour    { width: 6.7%;  }
+    col.c-repas      { width: 5.1%;  }
+    col.c-pp         { width: 4.4%;  }
+    col.c-net        { width: 6.0%;  }
+    col.c-mat        { width: 5.7%;  }
+    col.c-emargement { width: 8.5%;  }
+
+    table.cartouche-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-bottom: 0;
+    }
+
+    table.cartouche-table td {
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 9.5pt;
+      font-weight: 700;
+      height: 5.4mm;
+      padding: 0 4px;
+      vertical-align: middle;
+    }
+
+    .b-cell   { border: 0.75pt solid #000000; }
+    .bg-head  { background-color: #EBEBEB; }
+    .t-left   { text-align: left; }
+    .t-center { text-align: center; }
+    .t-right  { text-align: right; }
+
+    /* Tableau Principal */
+    table.mission-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    table.mission-table thead th {
+      background-color: #EBEBEB;
+      border: 0.75pt solid #000000;
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-align: center;
+      vertical-align: middle;
+      height: 6.4mm;
+      padding: 0 2px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    table.mission-table tbody tr {
+      height: 7.6mm;
+      background-color: #ffffff;
+    }
+
+    table.mission-table tbody td {
+      border: 0.75pt solid #000000;
+      background-color: #ffffff;
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 8.8pt;
+      vertical-align: middle;
+      padding: 0 3px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    td.cell-poste {
+      font-weight: 400;
+      text-align: center;
+      font-size: 8.4pt;
+    }
+
+    td.cell-num {
+      font-weight: 400;
+      text-align: center;
+      font-size: 8.8pt;
+    }
+
+    /* Colonne NET en BLANC */
+    td.cell-net {
+      background-color: #ffffff !important;
+      font-weight: 700;
+      text-align: center;
+      font-size: 8.8pt;
+    }
+
+    td.cell-mat {
+      font-weight: 400;
+      text-align: center;
+      font-size: 8.5pt;
+    }
+
+    /* Ligne TOTAL & Somme Globale redimensionnée à 100% */
+    tr.total-row td {
+      height: 7.2mm;
+      font-family: "Calibri", Arial, sans-serif;
+      font-weight: 700;
+      padding: 0;
+    }
+
+    td.total-title {
+      background-color: #DCDCDC;
+      border: 0.75pt solid #000000;
+      text-align: center;
+      font-size: 10.5pt;
+      letter-spacing: 0.4px;
+    }
+
+    td.total-amount {
+      background-color: #EBEBEB;
+      border: 0.75pt solid #000000;
+      text-align: center;
+      vertical-align: middle;
+      width: 100%;
+      font-size: 11pt; /* Taille 100% pleine largeur de la case fusionnée PP+NET+MAT */
+      font-weight: 800;
+      white-space: nowrap;
+      padding: 0 4px;
+    }
+
+    /* Pied de page */
+    .footer-section {
+      margin-top: 4mm;
+      font-family: "Calibri", Arial, sans-serif;
+    }
+
+    .arrete-label {
+      font-size: 12pt;
+      font-weight: 700;
+      margin-bottom: 1.5mm;
+    }
+
+    .arrete-words {
+      font-size: 11.5pt;
+      font-weight: 700;
+      font-style: italic;
+      margin-bottom: 4mm;
+      min-height: 5mm;
+    }
+
+    .signature-ordonnateur {
+      text-align: right;
+      padding-right: 22mm;
+      font-size: 11.5pt;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    /* Sélection de ligne à l'écran */
+    tr.active-row td {
+      background-color: #f0f9ff !important;
+    }
+    @media print {
+      tr.active-row td {
+        background-color: #ffffff !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Liste des destinations (Wilayas) -->
+  <datalist id="dlDestinations">
+    <option value="ADRAR"><option value="CHLEF"><option value="LAGHOUAT"><option value="OUM EL BOUAGHI">
+    <option value="BATNA"><option value="BEJAIA"><option value="BISKRA"><option value="BECHAR">
+    <option value="BLIDA"><option value="BOUIRA"><option value="TAMANRASSET"><option value="TEBESSA">
+    <option value="TLEMCEN"><option value="TIARET"><option value="TIZI-OUZOU"><option value="ALGER">
+    <option value="DJELFA"><option value="JIJEL"><option value="SETIF"><option value="SAIDA">
+    <option value="SKIKDA"><option value="SIDI BEL ABBES"><option value="ANNABA"><option value="GUELMA">
+    <option value="CONSTANTINE"><option value="MEDEA"><option value="MOSTAGANEM"><option value="M'SILA">
+    <option value="MASCARA"><option value="OUARGLA"><option value="ORAN"><option value="EL BAYADH">
+    <option value="ILLIZI"><option value="BORDJ BOU ARRERIDJ"><option value="BOUMERDES"><option value="EL TARF">
+    <option value="TINDOUF"><option value="TISSEMSILT"><option value="EL OUED"><option value="KHENCHELA">
+    <option value="SOUK AHRAS"><option value="TIPAZA"><option value="MILA"><option value="AIN DEFLA">
+    <option value="NAAMA"><option value="AIN TEMOUCHENT"><option value="GHARDAIA"><option value="RELIZANE">
+  </datalist>
+
+  <!-- 1. BARRE DE NAVIGATION SAAS ÉPURÉE -->
+  <header class="saas-navbar">
+    <div class="saas-title-group">
+      <h1 class="saas-title">EPTV — État des Frais de Mission</h1>
+      <span class="db-pill" id="badgeDbCount">Base Personnel : 0 agent</span>
+    </div>
+    <div class="saas-toolbar-actions">
+      <label class="btn-saas btn-import" title="Importer la base de données du personnel depuis votre fichier Excel">
+        📂 Importer Base Excel
+        <input type="file" id="fileExcelInput" accept=".xlsm,.xlsx,.xls,.csv" style="display:none;">
+      </label>
+      <button class="btn-saas btn-add" onclick="insererUneLigne()">+ Insérer une ligne</button>
+      <button class="btn-saas btn-delete" onclick="supprimerUneLigne()">- Supprimer la ligne</button>
+      <button class="btn-saas btn-clear" onclick="viderFeuilleComplete()">🧹 Réinitialiser</button>
+      <button class="btn-saas btn-print" onclick="window.print()">🖨️ Imprimer / PDF A4</button>
+    </div>
+  </header>
+
+  <!-- 2. ESPACE DE TRAVAIL & FEUILLE A4 IMPRIMABLE -->
+  <main class="a4-workspace">
+    <div class="a4-sheet">
+
+      <!-- BANDEAU SOUS-DIRECTION -->
+      <div class="banner-direction" contenteditable="true">
+        DST-SOUS DIRECTION DES MOYENS DE PRODUCTION VIDEO MOBILE
+      </div>
+
+      <!-- CARTOUCHE D'EN-TÊTE DE MISSION -->
+      <table class="cartouche-table">
+        <colgroup>
+          <col class="c-nom">
+          <col class="c-fonction">
+          <col class="c-categorie">
+          <col class="c-njours">
+          <col class="c-nrepas">
+          <col class="c-pctjour">
+          <col class="c-repas">
+          <col class="c-pp">
+          <col class="c-net">
+          <col class="c-mat">
+          <col class="c-emargement">
+        </colgroup>
+        <tbody>
+          <!-- Ligne 1 : DESTINATION (vide par défaut) & FRAIS DE MISSION -->
+          <tr>
+            <td class="b-cell bg-head t-left">DESTINATION:</td>
+            <td class="b-cell t-center" colspan="6">
+              <input type="text" id="inpDestination" class="excel-input t-center" list="dlDestinations" value="" placeholder="Saisir ou choisir la destination..." />
+            </td>
+            <td></td>
+            <td class="b-cell bg-head t-center" colspan="2" style="font-size:8pt;">FRAIS DE MISSION:</td>
+            <td class="b-cell t-center">
+              <select id="cellAI1_Zone" class="excel-select t-center" onchange="recalculerFeuille()">
+                <option value="NORD" selected>NORD</option>
+                <option value="SUD">SUD</option>
+              </select>
+            </td>
+          </tr>
+
+          <!-- Ligne 2 : EVENEMENT (vide par défaut) & TAUX (100% / 40%) -->
+          <tr>
+            <td class="b-cell bg-head t-left">EVENEMENT:</td>
+            <td class="b-cell t-center" colspan="6">
+              <input type="text" id="inpEvenement" class="excel-input t-center" value="" placeholder="Saisir l'événement..." />
+            </td>
+            <td></td>
+            <td class="b-cell t-center" colspan="3" rowspan="2" style="font-size:13pt; font-weight:700;">
+              <select id="cellAK1_Taux" class="excel-select t-center" style="font-size:13pt; font-weight:700;" onchange="recalculerFeuille()">
+                <option value="1" selected>100%</option>
+                <option value="0.4">40%</option>
+              </select>
+            </td>
+          </tr>
+
+          <!-- Ligne 3 : DATE DU (Calendrier) AU (Calendrier >= Départ) -->
+          <tr>
+            <td class="b-cell bg-head t-left">DATE:</td>
+            <td class="b-cell t-center">DU</td>
+            <td class="b-cell t-center" colspan="2">
+              <div class="date-picker-cell" onclick="ouvrirCalendrier('dateDebutPicker')">
+                <span class="date-display-text" id="labelDateDebut">
+                  <span class="val-date"></span>
+                  <span class="cal-arrow">▾</span>
+                </span>
+                <input type="date" id="dateDebutPicker" class="date-native-input" onchange="onDateDebutChange()" />
+              </div>
+            </td>
+            <td class="b-cell t-center">AU</td>
+            <td class="b-cell t-center" colspan="2">
+              <div class="date-picker-cell" onclick="ouvrirCalendrier('dateFinPicker')">
+                <span class="date-display-text" id="labelDateFin">
+                  <span class="val-date"></span>
+                  <span class="cal-arrow">▾</span>
+                </span>
+                <input type="date" id="dateFinPicker" class="date-native-input" onchange="onDateFinChange()" />
+              </div>
+            </td>
+            <td></td>
+          </tr>
+
+          <!-- Ligne 4 : HEURE DE RETOUR (3 horaires prédéfinis : 12:00, 15:00, 20:00) -->
+          <tr style="height: 5.2mm;">
+            <td colspan="5"></td>
+            <td class="b-cell t-center" colspan="2" style="padding:0;">
+              <div class="heure-select-wrapper">
+                <select id="cellN4_HeureFin" onchange="recalculerFeuille()">
+                  <option value="12:00" selected>12:00</option>
+                  <option value="15:00">15:00</option>
+                  <option value="20:00">20:00</option>
+                </select>
+              </div>
+            </td>
+            <td colspan="4"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- TABLEAU PRINCIPAL DES MISSIONNAIRES (100% Vierge à l'origine) -->
+      <table class="mission-table" id="tableMission">
+        <colgroup>
+          <col class="c-nom">
+          <col class="c-fonction">
+          <col class="c-categorie">
+          <col class="c-njours">
+          <col class="c-nrepas">
+          <col class="c-pctjour">
+          <col class="c-repas">
+          <col class="c-pp">
+          <col class="c-net">
+          <col class="c-mat">
+          <col class="c-emargement">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>NOM &amp; PRENOM</th>
+            <th>FONCTION</th>
+            <th>CATEGORIE</th>
+            <th>N JOURS</th>
+            <th>N REPAS</th>
+            <th>% DE JOUR</th>
+            <th>REPAS</th>
+            <th>PP</th>
+            <th>NET</th>
+            <th>MAT</th>
+            <th>EMARGEMENT</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyMission"></tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="5" style="border:none;"></td>
+            <td colspan="2" class="total-title">TOTAL</td>
+            <!-- Somme globale redimensionnée à 100% sur les colonnes PP + NET + MAT -->
+            <td colspan="3" class="total-amount" id="cellP41_Total">0 DA</td>
+            <td style="border:none;"></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- PIED DE PAGE -->
+      <div class="footer-section">
+        <div class="arrete-label">Arrêter le présent état à la somme de :</div>
+        <div class="arrete-words" id="cellA44_Lettres">Zéro Dinars</div>
+        <div class="signature-ordonnateur">L'Ordonnateur</div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       5. LOGIQUE MÉTIER & FORMULES EXCEL (sdmpvm + HD1-tIZI04 + ChiffreLettre)
+       ========================================================================== -->
+  <script>
+    const NB_LIGNES_DEFAUT = 23;
+    let indexLigneSelectionnee = -1;
+
+    /**
+     * Base de données du personnel (alimentée par l'import du fichier Excel "sdmpvm")
+     */
+    let sdmpvmTableau1 = [];
+
+    function creerEntreeSdmpvm(nom, poste, mat, categorie) {
+      const catNum = parseInt(categorie, 10);
+      const sup1050 = !isNaN(catNum) && catNum > 1050;
+      return {
+        nom: String(nom).trim().toUpperCase(),
+        poste: String(poste).trim(),
+        mat: String(mat).trim(),
+        categorie: String(categorie).trim(),
+        nord: sup1050 ? 3500 : 3200,
+        sud: sup1050 ? 4000 : 3700,
+        repas: sup1050 ? 550 : 500
+      };
+    }
+
+    function mettreAJourBadgeDB() {
+      document.getElementById("badgeDbCount").innerText =
+        `Base Personnel : ${sdmpvmTableau1.length} agent${sdmpvmTableau1.length > 1 ? "s" : ""}`;
+    }
+
+    /**
+     * GESTION DES CALENDRIERS DÉPART / RETOUR
+     */
+    function ouvrirCalendrier(inputId) {
+      const inp = document.getElementById(inputId);
+      if (inp && typeof inp.showPicker === "function") {
+        try { inp.showPicker(); } catch (e) {}
+      }
+    }
+
+    function formaterISOversFR(isoStr) {
+      if (!isoStr) return "";
+      const [y, m, d] = isoStr.split("-");
+      return `${d}/${m}/${y}`;
+    }
+
+    function ajouterJoursISO(isoStr, nbJours) {
+      const [y, m, d] = isoStr.split("-").map(Number);
+      const dt = new Date(y, m - 1, d, 12, 0, 0);
+      dt.setDate(dt.getDate() + nbJours);
+      const yyyy = dt.getFullYear();
+      const mm = String(dt.getMonth() + 1).padStart(2, "0");
+      const dd = String(dt.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function onDateDebutChange() {
+      const pickerDebut = document.getElementById("dateDebutPicker");
+      const pickerFin = document.getElementById("dateFinPicker");
+      const valDebut = pickerDebut.value;
+
+      document.querySelector("#labelDateDebut .val-date").innerText = formaterISOversFR(valDebut);
+
+      if (valDebut) {
+        const lendemainISO = ajouterJoursISO(valDebut, 1);
+        pickerFin.min = lendemainISO;
+
+        if (!pickerFin.value || pickerFin.value <= valDebut) {
+          pickerFin.value = lendemainISO;
+          document.querySelector("#labelDateFin .val-date").innerText = formaterISOversFR(lendemainISO);
+        }
+      }
+      recalculerFeuille();
+    }
+
+    function onDateFinChange() {
+      const pickerDebut = document.getElementById("dateDebutPicker");
+      const pickerFin = document.getElementById("dateFinPicker");
+
+      if (pickerDebut.value && pickerFin.value < pickerDebut.value) {
+        pickerFin.value = ajouterJoursISO(pickerDebut.value, 1);
+      }
+      document.querySelector("#labelDateFin .val-date").innerText = formaterISOversFR(pickerFin.value);
+      recalculerFeuille();
+    }
+
+    /**
+     * FONCTIONS EXCEL DE DATES : DATEDIF & NETWORKDAYS.INTL(..., 7)
+     */
+    function parserISO(isoStr) {
+      if (!isoStr) return null;
+      const [y, m, d] = isoStr.split("-").map(Number);
+      return new Date(y, m - 1, d, 12, 0, 0);
+    }
+
+    function excelDATEDIF_D(d1, d2) {
+      if (!d1 || !d2 || d2 < d1) return 0;
+      return Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    function excelTimeDecimal(strHeure) {
+      if (!strHeure) return 0;
+      const parts = strHeure.trim().split(":");
+      const h = parseInt(parts[0], 10) || 0;
+      const m = parseInt(parts[1], 10) || 0;
+      return (h * 60 + m) / (24 * 60);
+    }
+
+    // Weekend = 7 dans Excel -> Vendredi (5) et Samedi (6)
+    function excelNETWORKDAYS_INTL_7(dStart, dEnd) {
+      if (!dStart || !dEnd || dEnd < dStart) return 0;
+      let count = 0;
+      const cur = new Date(dStart.getTime());
+      while (cur <= dEnd) {
+        const day = cur.getDay();
+        if (day !== 5 && day !== 6) count++;
+        cur.setDate(cur.getDate() + 1);
+      }
+      return count;
+    }
+
+    function evaluerParametresMission() {
+      const dG4 = parserISO(document.getElementById("dateDebutPicker").value);
+      const dK4 = parserISO(document.getElementById("dateFinPicker").value);
+      const decN4 = excelTimeDecimal(document.getElementById("cellN4_HeureFin").value);
+      const zoneAI1 = document.getElementById("cellAI1_Zone").value;
+      const tauxAK1 = parseFloat(document.getElementById("cellAK1_Taux").value) || 1;
+
+      const S7_njours = excelDATEDIF_D(dG4, dK4);
+
+      // 12:00 (0.5) -> 0 repas | 15:00 (0.625 >= 0.615) -> 1 repas | 20:00 (0.833 >= 0.782) -> 2 repas
+      let V7_nrepas = 0;
+      if (decN4 >= 0.782) V7_nrepas = 2;
+      else if (decN4 >= 0.615) V7_nrepas = 1;
+
+      const nbOuvrablesTotal = excelNETWORKDAYS_INTL_7(dG4, dK4);
+      const finEstOuvrable = excelNETWORKDAYS_INTL_7(dK4, dK4) === 1;
+      const nbOuvrablesRetenus = (finEstOuvrable && decN4 < 0.615)
+        ? Math.max(0, nbOuvrablesTotal - 1)
+        : nbOuvrablesTotal;
+      const AG7_ppStandard = 400 * nbOuvrablesRetenus;
+
+      return { S7_njours, V7_nrepas, AG7_ppStandard, zoneAI1, tauxAK1 };
+    }
+
+    function calculerLigneAgent(catStr, matStr, njours, nrepas, params) {
+      const catNum = parseInt(catStr, 10);
+      const sup1050 = !isNaN(catNum) && catNum > 1050;
+      const isConv = (matStr.trim().toUpperCase() === "CONV" || catStr.trim() === "/");
+
+      const valNord = sup1050 ? 3500 : 3200;
+      const valSud  = sup1050 ? 4000 : 3700;
+      const AB7_repas = sup1050 ? 550 : 500;
+
+      const baseZone = (params.zoneAI1 === "NORD") ? valNord : valSud;
+      const Y7_pctJour = Math.round(baseZone * params.tauxAK1);
+      const AG7_pp = isConv ? 0 : params.AG7_ppStandard;
+      const AI7_net = (Y7_pctJour * njours) + (AB7_repas * nrepas) - AG7_pp;
+
+      return { Y7_pctJour, AB7_repas, AG7_pp, AI7_net };
+    }
+
+    /**
+     * LISTE DÉROULANTE INTELLIGENTE NOM & PRENOM :
+     * Filtrage progressif lettre par lettre (1re lettre -> 2e lettre -> etc.)
+     */
+    function fermerToutesLesListesNoms() {
+      document.querySelectorAll(".nom-dropdown-list.open").forEach(ul => {
+        ul.classList.remove("open");
+      });
+    }
+
+    function afficherListeFiltree(inputElem, forcerTous = false) {
+      fermerToutesLesListesNoms();
+
+      const wrapper = inputElem.closest(".nom-combobox");
+      const ul = wrapper.querySelector(".nom-dropdown-list");
+      const saisie = forcerTous ? "" : inputElem.value.trim().toUpperCase();
+
+      // Filtre strict par préfixe (1re lettre, puis 2e lettre, etc.) puis par sous-chaîne
+      let resultats = [];
+      if (!saisie) {
+        resultats = sdmpvmTableau1;
+      } else {
+        const commencePar = sdmpvmTableau1.filter(a => a.nom.startsWith(saisie));
+        const contientAussi = sdmpvmTableau1.filter(a => !a.nom.startsWith(saisie) && a.nom.includes(saisie));
+        resultats = [...commencePar, ...contientAussi];
+      }
+
+      ul.innerHTML = "";
+
+      if (resultats.length === 0) {
+        ul.classList.remove("open");
+        return;
+      }
+
+      resultats.forEach((agent, idx) => {
+        const li = document.createElement("li");
+        li.className = "nom-dropdown-item" + (idx === 0 && saisie ? " highlighted" : "");
+
+        // Mise en évidence visuelle des lettres tapées
+        let nomFormate = agent.nom;
+        if (saisie && agent.nom.startsWith(saisie)) {
+          nomFormate = `<span class="match-chars">${agent.nom.substring(0, saisie.length)}</span>${agent.nom.substring(saisie.length)}`;
+        }
+
+        li.innerHTML = `
+          <span>${nomFormate}</span>
+          <span class="meta-agent">${agent.categorie} | ${agent.mat}</span>
+        `;
+
+        li.onmousedown = function(evt) {
+          evt.preventDefault(); // Empêche le blur avant la sélection
+          appliquerAgentSurLigne(inputElem.closest("tr"), agent);
+          ul.classList.remove("open");
+        };
+
+        ul.appendChild(li);
+      });
+
+      ul.classList.add("open");
+    }
+
+    function appliquerAgentSurLigne(tr, agent) {
+      tr.querySelector(".inp-nom").value = agent.nom;
+      tr.querySelector(".inp-poste").value = agent.poste;
+      tr.querySelector(".inp-cat").value = agent.categorie;
+      tr.querySelector(".inp-mat").value = agent.mat;
+      delete tr.dataset.manualJours;
+      delete tr.dataset.manualRepas;
+      recalculerFeuille();
+    }
+
+    function onSaisieNomLettreParLettre(inputElem) {
+      const tr = inputElem.closest("tr");
+      const val = inputElem.value.trim().toUpperCase();
+
+      // Affiche la liste filtrée dès la 1re lettre tapée
+      afficherListeFiltree(inputElem, false);
+
+      if (!val) {
+        tr.querySelector(".inp-poste").value = "";
+        tr.querySelector(".inp-cat").value = "";
+        tr.querySelector(".inp-mat").value = "";
+        delete tr.dataset.manualJours;
+        delete tr.dataset.manualRepas;
+      } else {
+        const correspondanceExacte = sdmpvmTableau1.find(a => a.nom === val);
+        if (correspondanceExacte) {
+          appliquerAgentSurLigne(tr, correspondanceExacte);
+          return;
+        }
+      }
+      recalculerFeuille();
+    }
+
+    function onClavierNom(evt, inputElem) {
+      const wrapper = inputElem.closest(".nom-combobox");
+      const ul = wrapper.querySelector(".nom-dropdown-list");
+      if (!ul.classList.contains("open")) return;
+
+      const items = Array.from(ul.querySelectorAll(".nom-dropdown-item"));
+      if (items.length === 0) return;
+
+      let currentIndex = items.findIndex(el => el.classList.contains("highlighted"));
+
+      if (evt.key === "ArrowDown") {
+        evt.preventDefault();
+        if (currentIndex >= 0) items[currentIndex].classList.remove("highlighted");
+        currentIndex = (currentIndex + 1) % items.length;
+        items[currentIndex].classList.add("highlighted");
+        items[currentIndex].scrollIntoView({ block: "nearest" });
+      } else if (evt.key === "ArrowUp") {
+        evt.preventDefault();
+        if (currentIndex >= 0) items[currentIndex].classList.remove("highlighted");
+        currentIndex = (currentIndex - 1 + items.length) % items.length;
+        items[currentIndex].classList.add("highlighted");
+        items[currentIndex].scrollIntoView({ block: "nearest" });
+      } else if (evt.key === "Enter" || evt.key === "Tab") {
+        if (currentIndex >= 0) {
+          evt.preventDefault();
+          items[currentIndex].dispatchEvent(new MouseEvent("mousedown"));
+        }
+      } else if (evt.key === "Escape") {
+        ul.classList.remove("open");
+      }
+    }
+
+    function basculerMenuNom(arrowElem, evt) {
+      evt.stopPropagation();
+      const wrapper = arrowElem.closest(".nom-combobox");
+      const inp = wrapper.querySelector(".inp-nom");
+      const ul = wrapper.querySelector(".nom-dropdown-list");
+
+      if (ul.classList.contains("open")) {
+        ul.classList.remove("open");
+      } else {
+        inp.focus();
+        afficherListeFiltree(inp, true);
+      }
+    }
+
+    // Fermer la liste déroulante si on clique ailleurs sur la page
+    document.addEventListener("click", function(evt) {
+      if (!evt.target.closest(".nom-combobox")) {
+        fermerToutesLesListesNoms();
+      }
+    });
+
+    function onInputMatChange(inputMat) {
+      const tr = inputMat.closest("tr");
+      const matCherche = inputMat.value.trim().toUpperCase();
+
+      if (matCherche && matCherche !== "CONV") {
+        const agent = sdmpvmTableau1.find(a => a.mat.toUpperCase() === matCherche);
+        if (agent) {
+          tr.querySelector(".inp-nom").value = agent.nom;
+          tr.querySelector(".inp-poste").value = agent.poste;
+          tr.querySelector(".inp-cat").value = agent.categorie;
+        }
+      } else if (matCherche === "CONV") {
+        tr.querySelector(".inp-cat").value = "/";
+      }
+      recalculerFeuille();
+    }
+
+    /**
+     * CRÉATION D'UNE LIGNE VIERGE DU TABLEAU
+     */
+    function creerLigneVierge() {
+      const tr = document.createElement("tr");
+      tr.onclick = () => selectionnerLigne(tr);
+
+      tr.innerHTML = `
+        <td class="cell-nom">
+          <div class="nom-combobox">
+            <input type="text" class="inp-nom" value="" autocomplete="off"
+                   oninput="onSaisieNomLettreParLettre(this)"
+                   onfocus="afficherListeFiltree(this, false)"
+                   onkeydown="onClavierNom(event, this)" />
+            <span class="combo-arrow" onclick="basculerMenuNom(this, event)">▾</span>
+            <ul class="nom-dropdown-list"></ul>
+          </div>
+        </td>
+        <td class="cell-poste">
+          <input type="text" class="excel-input inp-poste t-center" value="" />
+        </td>
+        <td class="cell-num">
+          <input type="text" class="excel-input inp-cat t-center" value="" oninput="recalculerFeuille()" />
+        </td>
+        <td class="cell-num">
+          <input type="text" class="excel-input inp-njours t-center" value=""
+                 oninput="this.closest('tr').dataset.manualJours='1'; recalculerFeuille();" />
+        </td>
+        <td class="cell-num">
+          <input type="text" class="excel-input inp-nrepas t-center" value=""
+                 oninput="this.closest('tr').dataset.manualRepas='1'; recalculerFeuille();" />
+        </td>
+        <td class="cell-num col-y7"></td>
+        <td class="cell-num col-ab7"></td>
+        <td class="cell-num col-ag7"></td>
+        <td class="cell-net col-ai7"></td>
+        <td class="cell-mat">
+          <input type="text" class="excel-input inp-mat t-center" value="" oninput="onInputMatChange(this)" />
+        </td>
+        <td class="cell-num"></td>
+      `;
+      return tr;
+    }
+
+    function selectionnerLigne(trElem) {
+      const rows = document.querySelectorAll("#tbodyMission tr");
+      rows.forEach((r, idx) => {
+        r.classList.remove("active-row");
+        if (r === trElem) indexLigneSelectionnee = idx;
+      });
+      trElem.classList.add("active-row");
+    }
+
+    /**
+     * RECALCUL GLOBAL DE LA FEUILLE
+     */
+    function recalculerFeuille() {
+      const params = evaluerParametresMission();
+      const rows = document.querySelectorAll("#tbodyMission tr");
+      let P41_total = 0;
+
+      rows.forEach(tr => {
+        const nom = tr.querySelector(".inp-nom").value.trim();
+        const poste = tr.querySelector(".inp-poste").value.trim();
+        const cat = tr.querySelector(".inp-cat").value.trim();
+        const mat = tr.querySelector(".inp-mat").value.trim();
+        const inpJours = tr.querySelector(".inp-njours");
+        const inpRepas = tr.querySelector(".inp-nrepas");
+
+        if (!nom && !poste && !cat && !mat) {
+          inpJours.value = "";
+          inpRepas.value = "";
+          tr.querySelector(".col-y7").innerText = "";
+          tr.querySelector(".col-ab7").innerText = "";
+          tr.querySelector(".col-ag7").innerText = "";
+          tr.querySelector(".col-ai7").innerText = "";
+          return;
+        }
+
+        if (!tr.dataset.manualJours) inpJours.value = params.S7_njours;
+        if (!tr.dataset.manualRepas) inpRepas.value = params.V7_nrepas;
+
+        const njours = parseFloat(inpJours.value) || 0;
+        const nrepas = parseFloat(inpRepas.value) || 0;
+
+        const calc = calculerLigneAgent(cat, mat, njours, nrepas, params);
+
+        tr.querySelector(".col-y7").innerText = calc.Y7_pctJour;
+        tr.querySelector(".col-ab7").innerText = calc.AB7_repas;
+        tr.querySelector(".col-ag7").innerText = calc.AG7_pp;
+        tr.querySelector(".col-ai7").innerText = calc.AI7_net;
+
+        P41_total += calc.AI7_net;
+      });
+
+      document.getElementById("cellP41_Total").innerText =
+        P41_total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " DA";
+
+      document.getElementById("cellA44_Lettres").innerText = ChiffreLettre(P41_total);
+    }
+
+    /**
+     * ACTIONS BOUTONS : Insérer / Supprimer / Vider
+     */
+    function insererUneLigne() {
+      const tbody = document.getElementById("tbodyMission");
+      const tr = creerLigneVierge();
+
+      if (indexLigneSelectionnee >= 0 && indexLigneSelectionnee < tbody.children.length) {
+        tbody.insertBefore(tr, tbody.children[indexLigneSelectionnee + 1]);
+      } else {
+        tbody.appendChild(tr);
+      }
+      recalculerFeuille();
+    }
+
+    function supprimerUneLigne() {
+      const tbody = document.getElementById("tbodyMission");
+      if (indexLigneSelectionnee >= 0 && tbody.children.length > 1) {
+        tbody.removeChild(tbody.children[indexLigneSelectionnee]);
+        indexLigneSelectionnee = -1;
+        recalculerFeuille();
+      } else {
+        alert("Veuillez cliquer sur une ligne du tableau pour la sélectionner avant de la supprimer.");
+      }
+    }
+
+    function viderFeuilleComplete() {
+      document.getElementById("inpDestination").value = "";
+      document.getElementById("inpEvenement").value = "";
+      const tbody = document.getElementById("tbodyMission");
+      tbody.innerHTML = "";
+      for (let i = 0; i < NB_LIGNES_DEFAUT; i++) {
+        tbody.appendChild(creerLigneVierge());
+      }
+      recalculerFeuille();
+    }
+
+    /**
+     * IMPORTATION DE LA BASE PERSONNEL DEPUIS VOTRE FICHIER EXCEL (Feuille "sdmpvm")
+     */
+    document.getElementById("fileExcelInput").addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const data = new Uint8Array(evt.target.result);
+        const wb = XLSX.read(data, { type: "array" });
+
+        let extraits = [];
+        const targetSheets = wb.SheetNames.includes("sdmpvm") ? ["sdmpvm"] : wb.SheetNames;
+
+        targetSheets.forEach(sName => {
+          const ws = wb.Sheets[sName];
+          const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+
+          rows.forEach(r => {
+            if (!r || r.length < 4) return;
+            const c0 = String(r[0]).trim();
+            const c1 = String(r[1]).trim();
+            const c2 = String(r[2]).trim();
+            const c3 = String(r[3]).trim();
+
+            if (c0.toUpperCase().includes("NOM") || c1.toUpperCase() === "POSTE") return;
+
+            if (c0 && c1 && (!isNaN(parseInt(c3, 10)) || c3 === "/")) {
+              extraits.push(creerEntreeSdmpvm(c0, c1, c2, c3));
+            }
+          });
+        });
+
+        if (extraits.length > 0) {
+          const mapUnique = new Map();
+          extraits.forEach(a => mapUnique.set(a.nom.toUpperCase(), a));
+          sdmpvmTableau1 = Array.from(mapUnique.values()).sort((a, b) => a.nom.localeCompare(b.nom));
+
+          localStorage.setItem("eptv_sdmpvm_db_v2", JSON.stringify(sdmpvmTableau1));
+          mettreAJourBadgeDB();
+          alert(`${sdmpvmTableau1.length} agents ont été chargés. Tapez les premières lettres dans NOM & PRENOM pour filtrer.`);
+        } else {
+          alert("Aucun agent détecté dans ce fichier Excel.");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    /**
+     * MODULE 5 VBA : ChiffreLettre
+     */
+    function ConvertirPartie(Valeur) {
+      const Unites = ["", "Un", "Deux", "Trois", "Quatre", "Cinq", "Six", "Sept", "Huit", "Neuf"];
+      const SpecialDix = ["Dix", "Onze", "Douze", "Treize", "Quatorze", "Quinze", "Seize", "Dix-sept", "Dix-huit", "Dix-neuf"];
+      let Resultat = "";
+
+      if (Valeur >= 100) {
+        const centaine = Math.floor(Valeur / 100);
+        const reste = Valeur % 100;
+        if (centaine === 1) Resultat = "Cent";
+        else Resultat = Unites[centaine] + (reste === 0 ? " Cents" : " Cent");
+        if (reste > 0) Resultat += " ";
+        Valeur = reste;
+      }
+
+      if (Valeur >= 20) {
+        const dizaine = Math.floor(Valeur / 10);
+        const unite = Valeur % 10;
+        if (dizaine >= 2 && dizaine <= 6) {
+          const mapDiz = { 2: "Vingt", 3: "Trente", 4: "Quarante", 5: "Cinquante", 6: "Soixante" };
+          Resultat += mapDiz[dizaine];
+          if (unite === 1) Resultat += " et Un";
+          else if (unite > 0) Resultat += "-" + Unites[unite];
+        } else if (dizaine === 7) {
+          const temp = Valeur - 60;
+          Resultat += "Soixante";
+          if (temp === 11) Resultat += " et " + SpecialDix[1];
+          else Resultat += "-" + SpecialDix[temp - 10];
+        } else if (dizaine === 8) {
+          if (unite === 0) Resultat += "Quatre-vingts";
+          else {
+            Resultat += "Quatre-vingt";
+            if (unite === 1) Resultat += "-un";
+            else Resultat += "-" + Unites[unite];
+          }
+        } else if (dizaine === 9) {
+          Resultat += "Quatre-vingt-" + SpecialDix[unite];
+        }
+      } else if (Valeur >= 10) {
+        Resultat += SpecialDix[Valeur - 10];
+      } else if (Valeur > 0) {
+        Resultat += Unites[Valeur];
+      }
+      return Resultat.trim();
+    }
+
+    function ChiffreLettre(Valeur) {
+      let PartieEntiere = Math.floor(Valeur);
+      const Centimes = Math.round((Valeur - PartieEntiere) * 100);
+      let Resultat = "";
+
+      if (PartieEntiere === 0) Resultat = "Zéro";
+
+      if (PartieEntiere >= 1000000000) {
+        const Milliards = Math.floor(PartieEntiere / 1000000000);
+        Resultat += " " + ConvertirPartie(Milliards) + " Milliard" + (Milliards > 1 ? "s" : "");
+        PartieEntiere %= 1000000000;
+      }
+      if (PartieEntiere >= 1000000) {
+        const Millions = Math.floor(PartieEntiere / 1000000);
+        Resultat += " " + ConvertirPartie(Millions) + " Million" + (Millions > 1 ? "s" : "");
+        PartieEntiere %= 1000000;
+      }
+      if (PartieEntiere >= 1000) {
+        const Milliers = Math.floor(PartieEntiere / 1000);
+        Resultat += (Milliers === 1) ? " Mille" : " " + ConvertirPartie(Milliers) + " Mille";
+        PartieEntiere %= 1000;
+      }
+      if (PartieEntiere > 0) Resultat += " " + ConvertirPartie(PartieEntiere);
+      if (Centimes > 0) Resultat += " et " + ConvertirPartie(Centimes) + " Centime" + (Centimes > 1 ? "s" : "");
+
+      return (Resultat + " Dinars").trim();
+    }
+
+    /**
+     * INITIALISATION AU DÉMARRAGE
+     */
+    window.onload = function() {
+      const savedDb = localStorage.getItem("eptv_sdmpvm_db_v2");
+      if (savedDb) {
+        try { sdmpvmTableau1 = JSON.parse(savedDb); } catch (e) {}
+      }
+
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, "0");
+      const dd = String(today.getDate()).padStart(2, "0");
+      const todayISO = `${yyyy}-${mm}-${dd}`;
+      const tomorrowISO = ajouterJoursISO(todayISO, 1);
+
+      const pickerDebut = document.getElementById("dateDebutPicker");
+      const pickerFin = document.getElementById("dateFinPicker");
+
+      pickerDebut.value = todayISO;
+      pickerFin.min = tomorrowISO;
+      pickerFin.value = tomorrowISO;
+
+      document.querySelector("#labelDateDebut .val-date").innerText = formaterISOversFR(todayISO);
+      document.querySelector("#labelDateFin .val-date").innerText = formaterISOversFR(tomorrowISO);
+
+      viderFeuilleComplete();
+      mettreAJourBadgeDB();
+    };
+  </script>
+</body>
+</html>

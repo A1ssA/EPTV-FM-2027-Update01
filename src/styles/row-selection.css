@@ -1,0 +1,4 @@
+    /* Sélection de ligne à l'écran */
+    tr.active-row td {
+      background-color: #f0f9ff !important;
+    }

@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>EPTV — État des Frais de Mission</title>
+  <!-- Librairie SheetJS pour l'import de la base du personnel Excel (sdmpvm) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script type="module" crossorigin>(function(){const t=document.createElement("link").relList;if(t&&t.supports&&t.supports("modulepreload"))return;for(const r of document.querySelectorAll('link[rel="modulepreload"]'))n(r);new MutationObserver(r=>{for(const s of r)if(s.type==="childList")for(const i of s.addedNodes)i.tagName==="LINK"&&i.rel==="modulepreload"&&n(i)}).observe(document,{childList:!0,subtree:!0});function o(r){const s={};return r.integrity&&(s.integrity=r.integrity),r.referrerPolicy&&(s.referrerPolicy=r.referrerPolicy),r.crossOrigin==="use-credentials"?s.credentials="include":r.crossOrigin==="anonymous"?s.credentials="omit":s.credentials="same-origin",s}function n(r){if(r.ep)return;r.ep=!0;const s=o(r);fetch(r.href,s)}})();const N=1050,O=400,F=.782,D=.615;function x(e){const t=parseInt(e,10),o=!isNaN(t)&&t>N;return{nord:o?3500:3200,sud:o?4e3:3700,repas:o?550:500}}const A="eptv_sdmpvm_db_v2";let h=[];function y(){return h}function k(e){h=e}function U(e,t,o,n){const r=x(n);return{nom:String(e).trim().toUpperCase(),poste:String(t).trim(),mat:String(o).trim(),categorie:String(n).trim(),nord:r.nord,sud:r.sud,repas:r.repas}}function R(){const e=localStorage.getItem(A);if(e)try{h=JSON.parse(e)}catch{}}function $(){localStorage.setItem(A,JSON.stringify(h))}function z(e){const t=new Map;return e.forEach(o=>t.set(o.nom.toUpperCase(),o)),Array.from(t.values()).sort((o,n)=>o.nom.localeCompare(n.nom))}function g(e){if(!e)return"";const[t,o,n]=e.split("-");return`${n}/${o}/${t}`}function v(e,t){const[o,n,r]=e.split("-").map(Number),s=new Date(o,n-1,r,12,0,0);s.setDate(s.getDate()+t);const i=s.getFullYear(),a=String(s.getMonth()+1).padStart(2,"0"),l=String(s.getDate()).padStart(2,"0");return`${i}-${a}-${l}`}function J(e=new Date){const t=e.getFullYear(),o=String(e.getMonth()+1).padStart(2,"0"),n=String(e.getDate()).padStart(2,"0");return`${t}-${o}-${n}`}function I(e){if(!e)return null;const[t,o,n]=e.split("-").map(Number);return new Date(t,o-1,n,12,0,0)}function j(e,t){return!e||!t||t<e?0:Math.round((t.getTime()-e.getTime())/(1e3*60*60*24))}function G(e){if(!e)return 0;const t=e.trim().split(":"),o=parseInt(t[0],10)||0,n=parseInt(t[1],10)||0;return(o*60+n)/1440}function L(e,t){if(!e||!t||t<e)return 0;let o=0;const n=new Date(e.getTime());for(;n<=t;){const r=n.getDay();r!==5&&r!==6&&o++,n.setDate(n.getDate()+1)}return o}function K({dateDebutISO:e,dateFinISO:t,heureFin:o,zone:n,taux:r}){const s=I(e),i=I(t),a=G(o),l=n,c=parseFloat(r)||1,d=j(s,i);let m=0;a>=F?m=2:a>=D&&(m=1);const u=L(s,i),M=L(i,i)===1&&a<D?Math.max(0,u-1):u,P=O*M;return{S7_njours:d,V7_nrepas:m,AG7_ppStandard:P,zoneAI1:l,tauxAK1:c}}function Q(e,t,o,n,r){const s=t.trim().toUpperCase()==="CONV"||e.trim()==="/",i=x(e),a=i.nord,l=i.sud,c=i.repas,d=r.zoneAI1==="NORD"?a:l,m=Math.round(d*r.tauxAK1),u=s?0:r.AG7_ppStandard,b=m*o+c*n-u;return{Y7_pctJour:m,AB7_repas:c,AG7_pp:u,AI7_net:b}}function f(e){const t=["","Un","Deux","Trois","Quatre","Cinq","Six","Sept","Huit","Neuf"],o=["Dix","Onze","Douze","Treize","Quatorze","Quinze","Seize","Dix-sept","Dix-huit","Dix-neuf"];let n="";if(e>=100){const r=Math.floor(e/100),s=e%100;r===1?n="Cent":n=t[r]+(s===0?" Cents":" Cent"),s>0&&(n+=" "),e=s}if(e>=20){const r=Math.floor(e/10),s=e%10;if(r>=2&&r<=6)n+={2:"Vingt",3:"Trente",4:"Quarante",5:"Cinquante",6:"Soixante"}[r],s===1?n+=" et Un":s>0&&(n+="-"+t[s]);else if(r===7){const i=e-60;n+="Soixante",i===11?n+=" et "+o[1]:n+="-"+o[i-10]}else r===8?s===0?n+="Quatre-vingts":(n+="Quatre-vingt",s===1?n+="-un":n+="-"+t[s]):r===9&&(n+="Quatre-vingt-"+o[s])}else e>=10?n+=o[e-10]:e>0&&(n+=t[e]);return n.trim()}function H(e){let t=Math.floor(e);const o=Math.round((e-t)*100);let n="";if(t===0&&(n="Zéro"),t>=1e9){const r=Math.floor(t/1e9);n+=" "+f(r)+" Milliard"+(r>1?"s":""),t%=1e9}if(t>=1e6){const r=Math.floor(t/1e6);n+=" "+f(r)+" Million"+(r>1?"s":""),t%=1e6}if(t>=1e3){const r=Math.floor(t/1e3);n+=r===1?" Mille":" "+f(r)+" Mille",t%=1e3}return t>0&&(n+=" "+f(t)),o>0&&(n+=" et "+f(o)+" Centime"+(o>1?"s":"")),(n+" Dinars").trim()}function X(e){return e.toString().replace(/\B(?=(\d{3})+(?!\d))/g," ")+" DA"}function Y(){return K({dateDebutISO:document.getElementById("dateDebutPicker").value,dateFinISO:document.getElementById("dateFinPicker").value,heureFin:document.getElementById("cellN4_HeureFin").value,zone:document.getElementById("cellAI1_Zone").value,taux:document.getElementById("cellAK1_Taux").value})}function p(){const e=Y(),t=document.querySelectorAll("#tbodyMission tr");let o=0;t.forEach(n=>{const r=n.querySelector(".inp-nom").value.trim(),s=n.querySelector(".inp-poste").value.trim(),i=n.querySelector(".inp-cat").value.trim(),a=n.querySelector(".inp-mat").value.trim(),l=n.querySelector(".inp-njours"),c=n.querySelector(".inp-nrepas");if(!r&&!s&&!i&&!a){l.value="",c.value="",n.querySelector(".col-y7").innerText="",n.querySelector(".col-ab7").innerText="",n.querySelector(".col-ag7").innerText="",n.querySelector(".col-ai7").innerText="";return}n.dataset.manualJours||(l.value=e.S7_njours),n.dataset.manualRepas||(c.value=e.V7_nrepas);const d=parseFloat(l.value)||0,m=parseFloat(c.value)||0,u=Q(i,a,d,m,e);n.querySelector(".col-y7").innerText=u.Y7_pctJour,n.querySelector(".col-ab7").innerText=u.AB7_repas,n.querySelector(".col-ag7").innerText=u.AG7_pp,n.querySelector(".col-ai7").innerText=u.AI7_net,o+=u.AI7_net}),document.getElementById("cellP41_Total").innerText=X(o),document.getElementById("cellA44_Lettres").innerText=H(o)}function w(){document.querySelectorAll(".nom-dropdown-list.open").forEach(e=>{e.classList.remove("open")})}function S(e,t=!1){w();const o=y(),r=e.closest(".nom-combobox").querySelector(".nom-dropdown-list"),s=t?"":e.value.trim().toUpperCase();let i=[];if(!s)i=o;else{const a=o.filter(c=>c.nom.startsWith(s)),l=o.filter(c=>!c.nom.startsWith(s)&&c.nom.includes(s));i=[...a,...l]}if(r.innerHTML="",i.length===0){r.classList.remove("open");return}i.forEach((a,l)=>{const c=document.createElement("li");c.className="nom-dropdown-item"+(l===0&&s?" highlighted":"");let d=a.nom;s&&a.nom.startsWith(s)&&(d=`<span class="match-chars">${a.nom.substring(0,s.length)}</span>${a.nom.substring(s.length)}`),c.innerHTML=`
+          <span>${d}</span>
+          <span class="meta-agent">${a.categorie} | ${a.mat}</span>
+        `,c.onmousedown=function(m){m.preventDefault(),_(e.closest("tr"),a),r.classList.remove("open")},r.appendChild(c)}),r.classList.add("open")}function _(e,t){e.querySelector(".inp-nom").value=t.nom,e.querySelector(".inp-poste").value=t.poste,e.querySelector(".inp-cat").value=t.categorie,e.querySelector(".inp-mat").value=t.mat,delete e.dataset.manualJours,delete e.dataset.manualRepas,p()}function W(e){const t=e.closest("tr"),o=e.value.trim().toUpperCase();if(S(e,!1),!o)t.querySelector(".inp-poste").value="",t.querySelector(".inp-cat").value="",t.querySelector(".inp-mat").value="",delete t.dataset.manualJours,delete t.dataset.manualRepas;else{const n=y().find(r=>r.nom===o);if(n){_(t,n);return}}p()}function Z(e,t){const n=t.closest(".nom-combobox").querySelector(".nom-dropdown-list");if(!n.classList.contains("open"))return;const r=Array.from(n.querySelectorAll(".nom-dropdown-item"));if(r.length===0)return;let s=r.findIndex(i=>i.classList.contains("highlighted"));e.key==="ArrowDown"?(e.preventDefault(),s>=0&&r[s].classList.remove("highlighted"),s=(s+1)%r.length,r[s].classList.add("highlighted"),r[s].scrollIntoView({block:"nearest"})):e.key==="ArrowUp"?(e.preventDefault(),s>=0&&r[s].classList.remove("highlighted"),s=(s-1+r.length)%r.length,r[s].classList.add("highlighted"),r[s].scrollIntoView({block:"nearest"})):e.key==="Enter"||e.key==="Tab"?s>=0&&(e.preventDefault(),r[s].dispatchEvent(new MouseEvent("mousedown"))):e.key==="Escape"&&n.classList.remove("open")}function V(e,t){t.stopPropagation();const o=e.closest(".nom-combobox"),n=o.querySelector(".inp-nom"),r=o.querySelector(".nom-dropdown-list");r.classList.contains("open")?r.classList.remove("open"):(n.focus(),S(n,!0))}function ee(e){const t=e.closest("tr"),o=e.value.trim().toUpperCase();if(o&&o!=="CONV"){const n=y().find(r=>r.mat.toUpperCase()===o);n&&(t.querySelector(".inp-nom").value=n.nom,t.querySelector(".inp-poste").value=n.poste,t.querySelector(".inp-cat").value=n.categorie)}else o==="CONV"&&(t.querySelector(".inp-cat").value="/");p()}function te(){document.addEventListener("click",function(e){e.target.closest(".nom-combobox")||w()})}function ne(e){const t=document.getElementById(e);if(t&&typeof t.showPicker=="function")try{t.showPicker()}catch{}}function oe(){const e=document.getElementById("dateDebutPicker"),t=document.getElementById("dateFinPicker"),o=e.value;if(document.querySelector("#labelDateDebut .val-date").innerText=g(o),o){const n=v(o,1);t.min=n,(!t.value||t.value<=o)&&(t.value=n,document.querySelector("#labelDateFin .val-date").innerText=g(n))}p()}function re(){const e=document.getElementById("dateDebutPicker"),t=document.getElementById("dateFinPicker");e.value&&t.value<e.value&&(t.value=v(e.value,1)),document.querySelector("#labelDateFin .val-date").innerText=g(t.value),p()}function se(){["cellAI1_Zone","cellAK1_Taux","cellN4_HeureFin"].forEach(e=>{document.getElementById(e).addEventListener("change",p)}),document.getElementById("dateDebutPicker").addEventListener("change",oe),document.getElementById("dateFinPicker").addEventListener("change",re),document.querySelectorAll(".date-picker-cell").forEach(e=>{const t=e.querySelector(".date-native-input");e.addEventListener("click",()=>ne(t.id))})}function ie(){const e=J(),t=v(e,1),o=document.getElementById("dateDebutPicker"),n=document.getElementById("dateFinPicker");o.value=e,n.min=t,n.value=t,document.querySelector("#labelDateDebut .val-date").innerText=g(e),document.querySelector("#labelDateFin .val-date").innerText=g(t)}function T(){const e=document.createElement("tr");return e.innerHTML=`
+        <td class="cell-nom">
+          <div class="nom-combobox">
+            <input type="text" class="inp-nom" value="" autocomplete="off" />
+            <span class="combo-arrow">▾</span>
+            <ul class="nom-dropdown-list"></ul>
+          </div>
+        </td>
+        <td class="cell-poste">
+          <input type="text" class="excel-input inp-poste t-center" value="" />
+        </td>
+        <td class="cell-num">
+          <input type="text" class="excel-input inp-cat t-center" value="" />
+        </td>
+        <td class="cell-num">
+          <input type="text" class="excel-input inp-njours t-center" value="" />
+        </td>
+        <td class="cell-num">
+          <input type="text" class="excel-input inp-nrepas t-center" value="" />
+        </td>
+        <td class="cell-num col-y7"></td>
+        <td class="cell-num col-ab7"></td>
+        <td class="cell-num col-ag7"></td>
+        <td class="cell-net col-ai7"></td>
+        <td class="cell-mat">
+          <input type="text" class="excel-input inp-mat t-center" value="" />
+        </td>
+        <td class="cell-num cell-emargement"></td>
+      `,e}let E=-1;function q(){return E}function ce(){E=-1}function ae(e){document.querySelectorAll("#tbodyMission tr").forEach((o,n)=>{o.classList.remove("active-row"),o===e&&(E=n)}),e.classList.add("active-row")}const le=23;function ue(){const e=document.getElementById("tbodyMission"),t=T(),o=q();o>=0&&o<e.children.length?e.insertBefore(t,e.children[o+1]):e.appendChild(t),p()}function de(){const e=document.getElementById("tbodyMission"),t=q();t>=0&&e.children.length>1?(e.removeChild(e.children[t]),ce(),p()):alert("Veuillez cliquer sur une ligne du tableau pour la sélectionner avant de la supprimer.")}function B(){document.getElementById("inpDestination").value="",document.getElementById("inpEvenement").value="";const e=document.getElementById("tbodyMission");e.innerHTML="";for(let t=0;t<le;t++)e.appendChild(T());p()}function me(){const e=document.getElementById("tbodyMission");e.addEventListener("input",t=>{const o=t.target;o.matches(".inp-nom")?W(o):o.matches(".inp-cat")?p():o.matches(".inp-njours")?(o.closest("tr").dataset.manualJours="1",p()):o.matches(".inp-nrepas")?(o.closest("tr").dataset.manualRepas="1",p()):o.matches(".inp-mat")&&ee(o)}),e.addEventListener("focusin",t=>{t.target.matches(".inp-nom")&&S(t.target,!1)}),e.addEventListener("keydown",t=>{t.target.matches(".inp-nom")&&Z(t,t.target)}),e.addEventListener("click",t=>{const o=t.target.closest(".combo-arrow");if(o){V(o,t);return}const n=t.target.closest("tr");n&&e.contains(n)&&ae(n)})}function pe(e){const t=new Uint8Array(e),o=XLSX.read(t,{type:"array"}),n=[];return(o.SheetNames.includes("sdmpvm")?["sdmpvm"]:o.SheetNames).forEach(s=>{const i=o.Sheets[s];XLSX.utils.sheet_to_json(i,{header:1,defval:""}).forEach(l=>{if(!l||l.length<4)return;const c=String(l[0]).trim(),d=String(l[1]).trim(),m=String(l[2]).trim(),u=String(l[3]).trim();c.toUpperCase().includes("NOM")||d.toUpperCase()==="POSTE"||c&&d&&(!isNaN(parseInt(u,10))||u==="/")&&n.push(U(c,d,m,u))})}),n}function C(){const e=y().length,t=document.getElementById("badgeDbCount");t.innerText=`Base Personnel : ${e} agent${e>1?"s":""}`,e>0?t.classList.add("has-data"):t.classList.remove("has-data")}function fe(){var s,i;const e=((s=document.getElementById("inpDestination"))==null?void 0:s.value.trim())||"",t=((i=document.getElementById("dateDebutPicker"))==null?void 0:i.value)||"",o=document.title,n=e?e.replace(/[/\\?%*:|"<>]/g,"-").replace(/\s+/g,"_"):"Mission",r=t?`_${t}`:"";document.title=`EPTV_Frais_Mission_${n}${r}`,window.print(),setTimeout(()=>{document.title=o},1e3)}function ge(e){const t=e.target.files[0];if(!t)return;const o=new FileReader;o.onload=function(n){const r=pe(n.target.result);r.length>0?(k(z(r)),$(),C(),alert(`${y().length} agents ont été chargés. Tapez les premières lettres dans NOM & PRENOM pour filtrer.`)):alert("Aucun agent détecté dans ce fichier Excel.")},o.readAsArrayBuffer(t)}function ye(){document.getElementById("btnInsererLigne").addEventListener("click",ue),document.getElementById("btnSupprimerLigne").addEventListener("click",de),document.getElementById("btnReinitialiser").addEventListener("click",B),document.getElementById("btnImprimer").addEventListener("click",()=>window.print());const e=document.getElementById("btnExportPdf");e&&e.addEventListener("click",fe),document.getElementById("fileExcelInput").addEventListener("change",ge)}function he(){ye(),se(),me(),te(),R(),ie(),B(),C()}window.addEventListener("load",he);</script>
+  <style rel="stylesheet" crossorigin>* {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #e2e8f0;
+      font-family: "Calibri", "Segoe UI", Arial, sans-serif;
+      color: #000000;
+    }
+
+    /* ==========================================================================
+       2. INTERFACE SAAS ÉLÉGANTE & MODERNE (MASQUÉE À L'IMPRESSION)
+       ========================================================================== */
+    .saas-navbar {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: #ffffff;
+      padding: 10px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.35);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .saas-title-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35);
+      flex-shrink: 0;
+    }
+
+    .brand-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      background: rgba(59, 130, 246, 0.18);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      color: #93c5fd;
+      padding: 2px 7px;
+      border-radius: 5px;
+      line-height: 1.2;
+    }
+
+    .saas-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      margin: 0;
+      color: #f8fafc;
+      white-space: nowrap;
+    }
+
+    .db-pill {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      color: #cbd5e1;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+
+    .db-pill::before {
+      content: "";
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: #94a3b8;
+      transition: all 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .db-pill.has-data {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.38);
+      color: #6ee7b7;
+    }
+
+    .db-pill.has-data::before {
+      background-color: #10b981;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+    }
+
+    .saas-toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn-group,
+    .btn-group-export {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .btn-saas {
+      border: 1px solid transparent;
+      padding: 7px 13px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 12.5px;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #ffffff;
+      user-select: none;
+      line-height: 1.2;
+      box-sizing: border-box;
+    }
+
+    .btn-saas:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-saas:active {
+      transform: translateY(0);
+      filter: brightness(0.95);
+    }
+
+    .btn-saas:focus-visible {
+      outline: 2px solid #38bdf8;
+      outline-offset: 2px;
+    }
+
+    .btn-icon {
+      flex-shrink: 0;
+      transition: transform 0.15s ease;
+    }
+
+    .btn-saas:hover .btn-icon {
+      transform: scale(1.08);
+    }
+
+    /* 1. Importer Base Excel */
+    .btn-import {
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+      border-color: rgba(59, 130, 246, 0.4);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
+    .btn-import:hover {
+      background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.38);
+    }
+
+    /* 2. Édition lignes tableau */
+    .btn-add {
+      background: rgba(30, 41, 59, 0.85);
+      border-color: rgba(71, 85, 105, 0.7);
+      color: #e2e8f0;
+    }
+    .btn-add:hover {
+      background: #334155;
+      border-color: #64748b;
+      color: #ffffff;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+    }
+
+    .btn-delete {
+      background: rgba(220, 38, 38, 0.16);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+    .btn-delete:hover {
+      background: #dc2626;
+      border-color: #dc2626;
+      color: #ffffff;
+      box-shadow: 0 3px 12px rgba(220, 38, 38, 0.35);
+    }
+
+    /* 3. Réinitialiser */
+    .btn-clear {
+      background: transparent;
+      border-color: rgba(100, 116, 139, 0.45);
+      color: #cbd5e1;
+    }
+    .btn-clear:hover {
+      background: rgba(51, 65, 85, 0.5);
+      border-color: #94a3b8;
+      color: #ffffff;
+    }
+
+    /* 4. Imprimer */
+    .btn-print {
+      background: rgba(15, 118, 110, 0.22);
+      border-color: rgba(20, 184, 166, 0.45);
+      color: #5eead4;
+    }
+    .btn-print:hover {
+      background: #0f766e;
+      border-color: #0d9488;
+      color: #ffffff;
+      box-shadow: 0 3px 12px rgba(13, 148, 136, 0.32);
+    }
+
+    /* 5. Exporter en PDF */
+    .btn-pdf {
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      border-color: rgba(16, 185, 129, 0.5);
+      color: #ffffff;
+      font-weight: 600;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+    }
+    .btn-pdf:hover {
+      background: linear-gradient(135deg, #047857 0%, #059669 100%);
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.45);
+    }
+
+    /* ==========================================================================
+       3. CONTENEUR FEUILLE A4
+       ========================================================================== */
+    .a4-workspace {
+      padding: 28px 16px 48px 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .a4-sheet {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      padding: 10mm 8mm 8mm 8mm;
+      box-shadow: 0 12px 36px rgba(15, 23, 42, 0.15), 0 2px 6px rgba(15, 23, 42, 0.08);
+      border-radius: 2px;
+      position: relative;
+    }
+
+    /* Champs de saisie et menus déroulants */
+    .excel-input, .excel-select {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: inherit;
+      font-weight: inherit;
+      color: #000000;
+      text-align: inherit;
+      padding: 0;
+      margin: 0;
+      outline: none;
+    }
+
+    .excel-input::placeholder {
+      color: #94a3b8;
+      font-weight: 400;
+      font-style: italic;
+    }
+
+    .excel-input:focus, .excel-select:focus {
+      background-color: #f0f9ff;
+      box-shadow: inset 0 0 0 1px #0284c7;
+    }
+
+    /* ==========================================================================
+       COMBOBOX SUR MESURE POUR NOM & PRENOM (FILTRAGE LETTRE PAR LETTRE + FLÈCHE)
+       ========================================================================== */
+    td.cell-nom {
+      padding: 0 !important;
+      font-weight: 700;
+      text-align: left;
+      overflow: visible !important; /* Permet d'afficher la liste filtrée par-dessus les lignes */
+      position: relative;
+    }
+
+    .nom-combobox {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    .nom-combobox input.inp-nom {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 8.4pt;
+      font-weight: 700;
+      color: #000000;
+      padding-left: 4px;
+      padding-right: 16px;
+      outline: none;
+      text-transform: uppercase;
+    }
+
+    .nom-combobox .combo-arrow {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8.5pt;
+      color: #64748b;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .nom-combobox .combo-arrow:hover {
+      color: #0f172a;
+      background-color: #e2e8f0;
+    }
+
+    /* Menu déroulant flottant filtré lettre par lettre */
+    .nom-dropdown-list {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: -1px;
+      width: 280px;
+      max-height: 210px;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid #0284c7;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.22);
+      z-index: 9999;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .nom-dropdown-list.open {
+      display: block;
+    }
+
+    .nom-dropdown-item {
+      padding: 5px 8px;
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 9pt;
+      font-weight: 600;
+      color: #0f172a;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nom-dropdown-item:hover,
+    .nom-dropdown-item.highlighted {
+      background-color: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .nom-dropdown-item .match-chars {
+      color: #2563eb;
+      text-decoration: underline;
+      font-weight: 800;
+    }
+
+    .nom-dropdown-item .meta-agent {
+      font-size: 7.5pt;
+      font-weight: 400;
+      color: #64748b;
+      white-space: nowrap;
+    }
+
+    /* Sélecteur de Date avec Calendrier natif superposé + Affichage JJ/MM/AAAA */
+    .date-picker-cell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .date-display-text {
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #000000;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .date-display-text .cal-arrow {
+      font-size: 8pt;
+      color: #64748b;
+    }
+
+    .date-native-input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      border: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Sélecteur d'heure (12:00 / 15:00 / 20:00) */
+    .heure-select-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .heure-select-wrapper select {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 9.5pt;
+      font-weight: 400;
+      text-align: center;
+      text-align-last: center;
+      color: #000000;
+      cursor: pointer;
+      outline: none;
+    }
+    /* Sélection de ligne à l'écran */
+    tr.active-row td {
+      background-color: #f0f9ff !important;
+    }
+    /* ==========================================================================
+       4. STRUCTURE & BORDURES EXACTES DU MODÈLE EXCEL
+       ========================================================================== */
+    table.banner-direction-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background-color: #EBEBEB;
+      border: 1pt solid #000000;
+      height: 7.5mm;
+      margin-bottom: 3.5mm;
+    }
+
+    table.banner-direction-table td {
+      height: 7.5mm;
+      padding: 0 4px;
+      vertical-align: middle;
+      font-family: "Calibri", Arial, sans-serif;
+      font-weight: 700;
+      font-size: 11pt;
+    }
+
+    td.banner-col-dst {
+      width: 13%;
+      text-align: center;
+      border-right: 1pt solid #000000;
+      letter-spacing: 0.5px;
+    }
+
+    td.banner-col-sd {
+      width: 87%;
+      text-align: center;
+      padding: 0 4px;
+    }
+
+    .banner-select {
+      width: 100%;
+      height: 100%;
+      font-family: "Calibri", Arial, sans-serif;
+      font-weight: 700;
+      font-size: 10pt;
+      text-align: center;
+      text-align-last: center;
+      background: transparent;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      color: #000000;
+      letter-spacing: 0.2px;
+    }
+
+    /* Grille de 11 colonnes commune à l'entête et au tableau */
+    col.c-nom        { width: 22.0%; }
+    col.c-fonction   { width: 17.5%; }
+    col.c-categorie  { width: 7.8%;  }
+    col.c-njours     { width: 5.2%;  }
+    col.c-nrepas     { width: 5.2%;  }
+    col.c-pctjour    { width: 8.0%;  }
+    col.c-repas      { width: 4.8%;  }
+    col.c-pp         { width: 4.5%;  }
+    col.c-net        { width: 6.7%;  }
+    col.c-mat        { width: 5.8%;  }
+    col.c-emargement { width: 12.5%; }
+
+    table.cartouche-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-bottom: 0;
+    }
+
+    table.cartouche-table td {
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 9.5pt;
+      font-weight: 700;
+      height: 5.4mm;
+      padding: 0 4px;
+      vertical-align: middle;
+    }
+
+    .b-cell   { border: 0.75pt solid #000000; }
+    .bg-head  { background-color: #EBEBEB; }
+    .t-left   { text-align: left; }
+    .t-center { text-align: center; }
+    .t-right  { text-align: right; }
+
+    /* Tableau Principal */
+    table.mission-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      border: 1pt solid #000000;
+    }
+
+    table.mission-table thead th {
+      background-color: #EBEBEB;
+      border: 0.75pt solid #000000;
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 8.2pt;
+      font-weight: 700;
+      text-align: center;
+      vertical-align: middle;
+      height: 6.4mm;
+      padding: 0 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      letter-spacing: -0.1px;
+    }
+
+    /* Bordures extérieures renforcées (nom&prenom à gauche, émargement à droite) */
+    table.mission-table thead th:first-child,
+    table.mission-table tbody td:first-child {
+      border-left: 1pt solid #000000;
+    }
+
+    table.mission-table thead th:last-child,
+    table.mission-table tbody td:last-child {
+      border-right: 1pt solid #000000;
+    }
+
+    table.mission-table tbody tr {
+      height: 7.6mm;
+      background-color: #ffffff;
+    }
+
+    table.mission-table tbody td {
+      border: 0.75pt solid #000000;
+      background-color: #ffffff;
+      font-family: "Calibri", Arial, sans-serif;
+      font-size: 8.8pt;
+      vertical-align: middle;
+      padding: 0 3px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    td.cell-poste {
+      font-weight: 400;
+      text-align: center;
+      font-size: 8.4pt;
+    }
+
+    td.cell-num {
+      font-weight: 400;
+      text-align: center;
+      font-size: 8.8pt;
+    }
+
+    /* Colonne NET en BLANC */
+    td.cell-net {
+      background-color: #ffffff !important;
+      font-weight: 700;
+      text-align: center;
+      font-size: 8.8pt;
+    }
+
+    td.cell-mat {
+      font-weight: 400;
+      text-align: center;
+      font-size: 8.5pt;
+    }
+
+    /* Ligne TOTAL & Somme Globale agrandie à 300% */
+    tr.total-row td {
+      height: 11mm;
+      font-family: "Calibri", Arial, sans-serif;
+      padding: 0;
+      vertical-align: middle;
+    }
+
+    td.total-empty {
+      border: none;
+      background: transparent;
+    }
+
+    td.total-title {
+      background-color: #DCDCDC;
+      border: 1pt solid #000000;
+      text-align: center;
+      font-size: 13pt;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+    }
+
+    td.total-amount {
+      background-color: #EBEBEB;
+      border: 1.25pt solid #000000;
+      text-align: center;
+      vertical-align: middle;
+      width: 100%;
+      font-size: 17pt; /* Case agrandie 300% avec police imposante et très lisible */
+      font-weight: 900;
+      letter-spacing: 0.6px;
+      white-space: nowrap;
+      padding: 0 6px;
+    }
+
+    /* Pied de page */
+    .footer-section {
+      margin-top: 4mm;
+      font-family: "Calibri", Arial, sans-serif;
+    }
+
+    .arrete-label {
+      font-size: 12pt;
+      font-weight: 700;
+      margin-bottom: 1.5mm;
+    }
+
+    .arrete-words {
+      font-size: 11.5pt;
+      font-weight: 700;
+      font-style: italic;
+      margin-bottom: 4mm;
+      min-height: 5mm;
+    }
+
+    .signature-ordonnateur {
+      text-align: right;
+      padding-right: 22mm;
+      font-size: 11.5pt;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    /* ==========================================================================
+       1. CONFIGURATION STRICTE PAGE A4 & IMPRESSION
+       ========================================================================== */
+    @page {
+      size: A4 portrait;
+      margin: 8mm 8mm 8mm 8mm;
+    }
+
+
+
+    /* Règles strictes d'impression : 0 flèche, 0 placeholder, fidélité 100% Excel */
+    @media print {
+      body { background: #ffffff; }
+      .saas-navbar { display: none !important; }
+      .a4-workspace { padding: 0; }
+      .a4-sheet {
+        width: 100%;
+        min-height: auto;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+      }
+      .excel-input::placeholder {
+        color: transparent !important;
+      }
+      .excel-input, .excel-select, .banner-select, .heure-select-wrapper select, .nom-combobox input.inp-nom {
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding-right: 2px !important;
+        border: none !important;
+      }
+      .nom-combobox .combo-arrow,
+      .nom-dropdown-list,
+      .date-display-text .cal-arrow {
+        display: none !important;
+      }
+      input::-webkit-calendar-picker-indicator {
+        display: none !important;
+        opacity: 0 !important;
+      }
+
+      /* Intégrité stricte des bordures sur tout le tableau et toutes les colonnes */
+      table.mission-table,
+      table.cartouche-table,
+      table.banner-direction-table {
+        border-collapse: collapse !important;
+        border: 1pt solid #000000 !important;
+      }
+      table.mission-table thead th,
+      table.mission-table tbody td {
+        border: 0.75pt solid #000000 !important;
+      }
+      table.mission-table thead th:first-child,
+      table.mission-table tbody td:first-child {
+        border-left: 1.2pt solid #000000 !important;
+      }
+      table.mission-table thead th:last-child,
+      table.mission-table tbody td:last-child {
+        border-right: 1.2pt solid #000000 !important;
+      }
+      .cell-emargement {
+        border-right: 1.2pt solid #000000 !important;
+      }
+
+      /* Case TOTAL agrandie 300% à l'impression */
+      tr.total-row td {
+        height: 11mm !important;
+      }
+      td.total-title {
+        font-size: 13pt !important;
+        font-weight: 800 !important;
+        border: 1pt solid #000000 !important;
+      }
+      td.total-amount {
+        font-size: 17pt !important;
+        font-weight: 900 !important;
+        border: 1.25pt solid #000000 !important;
+      }
+    }
+
+    @media print {
+      tr.active-row td {
+        background-color: #ffffff !important;
+      }
+    }</style>
+</head>
+<body>
+
+  <!-- Liste des destinations (Wilayas) -->
+  <datalist id="dlDestinations">
+    <option value="ADRAR"><option value="CHLEF"><option value="LAGHOUAT"><option value="OUM EL BOUAGHI">
+    <option value="BATNA"><option value="BEJAIA"><option value="BISKRA"><option value="BECHAR">
+    <option value="BLIDA"><option value="BOUIRA"><option value="TAMANRASSET"><option value="TEBESSA">
+    <option value="TLEMCEN"><option value="TIARET"><option value="TIZI-OUZOU"><option value="ALGER">
+    <option value="DJELFA"><option value="JIJEL"><option value="SETIF"><option value="SAIDA">
+    <option value="SKIKDA"><option value="SIDI BEL ABBES"><option value="ANNABA"><option value="GUELMA">
+    <option value="CONSTANTINE"><option value="MEDEA"><option value="MOSTAGANEM"><option value="M'SILA">
+    <option value="MASCARA"><option value="OUARGLA"><option value="ORAN"><option value="EL BAYADH">
+    <option value="ILLIZI"><option value="BORDJ BOU ARRERIDJ"><option value="BOUMERDES"><option value="EL TARF">
+    <option value="TINDOUF"><option value="TISSEMSILT"><option value="EL OUED"><option value="KHENCHELA">
+    <option value="SOUK AHRAS"><option value="TIPAZA"><option value="MILA"><option value="AIN DEFLA">
+    <option value="NAAMA"><option value="AIN TEMOUCHENT"><option value="GHARDAIA"><option value="RELIZANE">
+  </datalist>
+
+  <!-- 1. BARRE DE NAVIGATION SAAS ÉPURÉE -->
+  <header class="saas-navbar">
+    <div class="saas-title-group">
+      <div class="brand-container">
+        <div class="brand-logo" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-badge">EPTV</span>
+          <h1 class="saas-title">État des Frais de Mission</h1>
+        </div>
+      </div>
+      <span class="db-pill" id="badgeDbCount">Base Personnel : 0 agent</span>
+    </div>
+    <div class="saas-toolbar-actions">
+      <label class="btn-saas btn-import" title="Importer la base de données du personnel depuis votre fichier Excel">
+        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        <span>Importer Base Excel</span>
+        <input type="file" id="fileExcelInput" accept=".xlsm,.xlsx,.xls,.csv" style="display:none;">
+      </label>
+
+      <div class="btn-group">
+        <button class="btn-saas btn-add" id="btnInsererLigne" title="Ajouter une ligne au tableau">
+          <svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Insérer une ligne</span>
+        </button>
+        <button class="btn-saas btn-delete" id="btnSupprimerLigne" title="Supprimer la ligne sélectionnée">
+          <svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Supprimer la ligne</span>
+        </button>
+      </div>
+
+      <button class="btn-saas btn-clear" id="btnReinitialiser" title="Réinitialiser tous les champs de la feuille">
+        <svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+        </svg>
+        <span>Réinitialiser</span>
+      </button>
+
+      <div class="btn-group-export">
+        <button class="btn-saas btn-print" id="btnImprimer" title="Imprimer le document">
+          <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+          </svg>
+          <span>Imprimer</span>
+        </button>
+        <button class="btn-saas btn-pdf" id="btnExportPdf" title="Exporter au format PDF">
+          <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>Exporter en PDF</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. ESPACE DE TRAVAIL & FEUILLE A4 IMPRIMABLE -->
+  <main class="a4-workspace">
+    <div class="a4-sheet">
+
+      <!-- BANDEAU SOUS-DIRECTION EN 2 COLONNES -->
+      <table class="banner-direction-table">
+        <tbody>
+          <tr>
+            <td class="banner-col-dst">DST</td>
+            <td class="banner-col-sd">
+              <select id="selSousDirection" class="banner-select">
+                <option value="SOUS DIRECTION DES MOYENS DE PRODUCTION VIDEO MOBILE" selected>SOUS DIRECTION DES MOYENS DE PRODUCTION VIDEO MOBILE</option>
+                <option value="SOUS DIRECTION DES MOYENS DE PRODUCTION VIDEO FIXE">SOUS DIRECTION DES MOYENS DE PRODUCTION VIDEO FIXE</option>
+                <option value="SOUS DIRECTION DE DIFFUSION">SOUS DIRECTION DE DIFFUSION</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- CARTOUCHE D'EN-TÊTE DE MISSION -->
+      <table class="cartouche-table">
+        <colgroup>
+          <col class="c-nom">
+          <col class="c-fonction">
+          <col class="c-categorie">
+          <col class="c-njours">
+          <col class="c-nrepas">
+          <col class="c-pctjour">
+          <col class="c-repas">
+          <col class="c-pp">
+          <col class="c-net">
+          <col class="c-mat">
+          <col class="c-emargement">
+        </colgroup>
+        <tbody>
+          <!-- Ligne 1 : DESTINATION (vide par défaut) & FRAIS DE MISSION -->
+          <tr>
+            <td class="b-cell bg-head t-left">DESTINATION:</td>
+            <td class="b-cell t-center" colspan="6">
+              <input type="text" id="inpDestination" class="excel-input t-center" list="dlDestinations" value="" placeholder="Saisir ou choisir la destination..." />
+            </td>
+            <td></td>
+            <td class="b-cell bg-head t-center" colspan="2" style="font-size:8pt;">FRAIS DE MISSION:</td>
+            <td class="b-cell t-center">
+              <select id="cellAI1_Zone" class="excel-select t-center">
+                <option value="NORD" selected>NORD</option>
+                <option value="SUD">SUD</option>
+              </select>
+            </td>
+          </tr>
+
+          <!-- Ligne 2 : EVENEMENT (vide par défaut) & TAUX (100% / 40%) -->
+          <tr>
+            <td class="b-cell bg-head t-left">EVENEMENT:</td>
+            <td class="b-cell t-center" colspan="6">
+              <input type="text" id="inpEvenement" class="excel-input t-center" value="" placeholder="Saisir l'événement..." />
+            </td>
+            <td></td>
+            <td class="b-cell t-center" colspan="3" rowspan="2" style="font-size:13pt; font-weight:700;">
+              <select id="cellAK1_Taux" class="excel-select t-center" style="font-size:13pt; font-weight:700;">
+                <option value="1" selected>100%</option>
+                <option value="0.4">40%</option>
+                <option value="0.25">25%</option>
+              </select>
+            </td>
+          </tr>
+
+          <!-- Ligne 3 : DATE DU (Calendrier) AU (Calendrier >= Départ) -->
+          <tr>
+            <td class="b-cell bg-head t-left">DATE:</td>
+            <td class="b-cell t-center">DU</td>
+            <td class="b-cell t-center" colspan="2">
+              <div class="date-picker-cell">
+                <span class="date-display-text" id="labelDateDebut">
+                  <span class="val-date"></span>
+                  <span class="cal-arrow">▾</span>
+                </span>
+                <input type="date" id="dateDebutPicker" class="date-native-input" />
+              </div>
+            </td>
+            <td class="b-cell t-center">AU</td>
+            <td class="b-cell t-center" colspan="2">
+              <div class="date-picker-cell">
+                <span class="date-display-text" id="labelDateFin">
+                  <span class="val-date"></span>
+                  <span class="cal-arrow">▾</span>
+                </span>
+                <input type="date" id="dateFinPicker" class="date-native-input" />
+              </div>
+            </td>
+            <td></td>
+          </tr>
+
+          <!-- Ligne 4 : HEURE DE RETOUR (3 horaires prédéfinis : 12:00, 15:00, 20:00) -->
+          <tr style="height: 5.2mm;">
+            <td colspan="5"></td>
+            <td class="b-cell t-center" colspan="2" style="padding:0;">
+              <div class="heure-select-wrapper">
+                <select id="cellN4_HeureFin">
+                  <option value="12:00" selected>12:00</option>
+                  <option value="15:00">15:00</option>
+                  <option value="20:00">20:00</option>
+                </select>
+              </div>
+            </td>
+            <td colspan="4"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- TABLEAU PRINCIPAL DES MISSIONNAIRES (100% Vierge à l'origine) -->
+      <table class="mission-table" id="tableMission">
+        <colgroup>
+          <col class="c-nom">
+          <col class="c-fonction">
+          <col class="c-categorie">
+          <col class="c-njours">
+          <col class="c-nrepas">
+          <col class="c-pctjour">
+          <col class="c-repas">
+          <col class="c-pp">
+          <col class="c-net">
+          <col class="c-mat">
+          <col class="c-emargement">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>NOM &amp; PRENOM</th>
+            <th>FONCTION</th>
+            <th>CATEGORIE</th>
+            <th>N JOURS</th>
+            <th>N REPAS</th>
+            <th>% DU JOUR</th>
+            <th>REPAS</th>
+            <th>PP</th>
+            <th>NET</th>
+            <th>MAT</th>
+            <th>EMARGEMENT</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyMission"></tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="5" class="total-empty"></td>
+            <td colspan="2" class="total-title">TOTAL</td>
+            <!-- Somme globale agrandie (300%) sur colonnes PP + NET + MAT + EMARGEMENT -->
+            <td colspan="4" class="total-amount" id="cellP41_Total">0 DA</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- PIED DE PAGE -->
+      <div class="footer-section">
+        <div class="arrete-label">Arrêter le présent état à la somme de :</div>
+        <div class="arrete-words" id="cellA44_Lettres">Zéro Dinars</div>
+        <div class="signature-ordonnateur">L'Ordonnateur</div>
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>
